@@ -12,7 +12,7 @@
  * 500 WITHOUT leaking internals to the client.
  */
 import { randomUUID } from 'crypto';
-import { logger } from './logger.js';
+import { logger } from '../lib/logger.js';
 
 export function requestContext(req, res, next) {
   const id = req.headers['x-request-id'] || randomUUID();
