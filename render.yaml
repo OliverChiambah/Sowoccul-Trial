@@ -47,7 +47,7 @@ services:
     runtime: node
     plan: free                 # free tier — sleeps after ~15 min idle
     rootDir: server
-    buildCommand: npm install
+    buildCommand: npm install && npm run seed
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
