@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E5C34"/>
+      <stop offset="0.55" stop-color="#127A45"/>
+      <stop offset="1" stop-color="#1E56A0"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dff3e8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- subtle geometric accents -->
+  <circle cx="1080" cy="120" r="230" fill="#ffffff" opacity="0.05"/>
+  <circle cx="150" cy="560" r="180" fill="#ffffff" opacity="0.04"/>
+  <rect x="0" y="0" width="1200" height="8" fill="#F2B705" opacity="0.9"/>
+
+  <!-- S mark badge -->
+  <g transform="translate(96,150)">
+    <rect width="120" height="120" rx="26" fill="url(#mark)"/>
+    <path d="M84 44c-4.9-4.3-11.6-6.8-18.8-6.8-12.4 0-20.7 6.4-20.7 15.4 0 7.9 5.8 12 17.3 14.7 9.4 2.1 11.8 3.6 11.8 6.8 0 3.4-3.6 5.5-9.4 5.5-6.2 0-11.5-2.4-15.8-6.6l-5.8 8.7c5.4 5.1 13.2 7.9 21.4 7.9 13.2 0 21.8-6.4 21.8-16.2 0-8.5-5.6-12.4-17.7-15-9.2-2.1-11.5-3.4-11.5-6.4 0-3 3.2-4.9 8.5-4.9 5.3 0 10.2 1.9 14.3 5.3z" fill="#127A45"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="240" y="205" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="700" fill="#ffffff">SOWOCCUL</text>
+  <text x="242" y="252" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="500" fill="#dff3e8" letter-spacing="0.5">Sonel Workers Credit Union</text>
+
+  <!-- headline -->
+  <text x="96" y="380" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="#ffffff">Save with confidence.</text>
+  <text x="96" y="446" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="#ffffff">Borrow with fairness.</text>
+
+  <!-- tagline -->
+  <text x="98" y="500" font-family="Arial, Helvetica, sans-serif" font-size="25" fill="#eaf6ef">A licensed microfinance cooperative in Cameroon since 1995.</text>
+
+  <!-- trust row -->
+  <g font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="600" fill="#ffffff">
+    <rect x="96" y="536" width="234" height="46" rx="23" fill="#ffffff" opacity="0.14"/>
+    <text x="120" y="565">Licensed MFI · COBAC</text>
+    <rect x="346" y="536" width="150" height="46" rx="23" fill="#ffffff" opacity="0.14"/>
+    <text x="370" y="565">6 branches</text>
+    <rect x="512" y="536" width="196" height="46" rx="23" fill="#ffffff" opacity="0.14"/>
+    <text x="536" y="565">Open to the public</text>
+  </g>
+
+  <!-- domain -->
+  <text x="1104" y="572" text-anchor="end" font-family="'Courier New', monospace" font-size="24" font-weight="600" fill="#F2B705">sowoccul.cm</text>
+</svg>

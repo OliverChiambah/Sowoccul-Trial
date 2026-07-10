@@ -1,0 +1,80 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../lib/api.js';
+import { PublicNav, PublicFooter } from '../components/PublicChrome.jsx';
+
+// Generates initials from a name; falls back to a person glyph when empty.
+function initials(name) {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '';
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+
+function TeamMember({ name, role, branch, photo, variant = 'manager' }) {
+  const filled = Boolean(name && name.trim());
+  const ring = variant === 'president' ? 'var(--green-700)' : variant === 'gm' ? 'var(--blue-700)' : 'var(--navy)';
+  const size = variant === 'president' ? 88 : variant === 'gm' ? 96 : 72;
+  return (
+    <div className={`team-card ${variant}${filled ? '' : ' empty'}`}>
+      <div className="team-avatar" style={{ width: size, height: size, borderColor: filled ? ring : 'var(--paper-200)', color: ring, overflow: 'hidden' }}>
+        {photo ? (
+          <img src={`/api/content/images/${photo}`} alt={name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : filled ? (
+          <span className="team-initials">{initials(name)}</span>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={size * 0.5} height={size * 0.5}>
+            <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+        )}
+      </div>
+      <div className="team-name">{filled ? name : 'To be announced'}</div>
+      <div className="team-role">{role}</div>
+      {branch && <div className="team-branch">{branch}</div>}
+    </div>
+  );
+}
+
+export default function Team() {
+  const nav = useNavigate();
+  const goSection = (id) => nav(`/#${id}`);
+  const [team, setTeam] = useState(null);
+
+  // Team names are managed by admins and served from the API.
+  useEffect(() => {
+    let active = true;
+    api('/content/team').then((r) => { if (active) setTeam(r.data); }).catch(() => { if (active) setTeam({ president: {}, gm: {}, managers: [] }); });
+    return () => { active = false; };
+  }, []);
+
+  const president = team?.president || { role: 'President, Board of Directors' };
+  const gm = team?.gm || { role: 'General Manager' };
+  const branchManagers = team?.managers || [];
+
+  return (
+    <>
+      <PublicNav onSection={goSection} />
+
+      <section className="page-hero">
+        <div className="page-hero-inner">
+          <div className="sec-eyebrow">Our team</div>
+          <h1>The people behind SOWOCCUL</h1>
+          <p>Led by our Board President and General Manager, and served across the country by our six branch managers — one for each branch, with our headquarters in Limbe.</p>
+        </div>
+      </section>
+
+      <section className="team section" style={{ paddingTop: 10 }}>
+        <div className="team-org">
+          <div className="team-row team-top"><TeamMember name={president.name} role={president.role} photo={president.photo} variant="president" /></div>
+          <div className="team-connector" aria-hidden="true" />
+          <div className="team-row team-center"><TeamMember name={gm.name} role={gm.role} photo={gm.photo} variant="gm" /></div>
+          <div className="team-connector" aria-hidden="true" />
+          <div className="team-row team-managers">
+            {branchManagers.map((m, i) => <TeamMember key={m.branch || i} {...m} variant="manager" />)}
+          </div>
+        </div>
+      </section>
+
+      <PublicFooter onSection={goSection} />
+    </>
+  );
+}

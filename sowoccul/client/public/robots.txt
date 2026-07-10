@@ -1,0 +1,15 @@
+# SOWOCCUL — robots.txt
+# Allow search engines to crawl the public site.
+User-agent: *
+Allow: /
+
+# Keep private application areas out of search results.
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /account
+Disallow: /my-data
+Disallow: /transfer
+Disallow: /apply-loan
+Disallow: /loan-balance
+
+Sitemap: https://sowoccul.cm/sitemap.xml
