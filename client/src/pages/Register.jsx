@@ -37,8 +37,13 @@ export default function Register() {
     setForm((f) => ({ ...f, [name]: file ? file.name : '' }));
   };
 
-  const Field = ({ label, name, type: inputType = 'text', amount, req, full, options }) => (
-    <div className={`field ${full ? 'full' : ''}`}>
+  // Plain render function, NOT a component. Using <Field/> (a component defined
+  // inside render) remounts every input on each keystroke and steals focus.
+  // Calling this as a function, {field({...})}, inlines the JSX with no component
+  // boundary, so inputs keep focus AND always read the latest form/lang. Do not
+  // convert this back into a <Field/> component.
+  const field = ({ label, name, type: inputType = 'text', amount, req, full, options }) => (
+    <div className={`field ${full ? 'full' : ''}`} key={name}>
       <label>{label}{req && <span className="req">*</span>}</label>
       {options ? (
         <select value={form[name] || ''} onChange={set(name)}>
@@ -140,32 +145,32 @@ export default function Register() {
           <div className="card-legend">{t('reg_g_base')}</div>
           {type === 'individual' ? (
             <div className="grid2">
-              <Field label={t('reg_surname')} name="surname" req />
-              <Field label={t('reg_given')} name="given_names" req />
-              <Field label={t('reg_sex')} name="gender" options={[['male', lang === 'fr' ? 'Masculin' : 'Male'], ['female', lang === 'fr' ? 'Féminin' : 'Female']]} />
-              <Field label={t('reg_marital')} name="marital_status" options={[['single', lang === 'fr' ? 'Célibataire' : 'Single'], ['married', lang === 'fr' ? 'Marié(e)' : 'Married'], ['divorced', lang === 'fr' ? 'Divorcé(e)' : 'Divorced'], ['widowed', lang === 'fr' ? 'Veuf/Veuve' : 'Widowed']]} />
-              <Field label={t('reg_regime')} name="matrimonial_regime" options={[['monogamy', lang === 'fr' ? 'Monogamie' : 'Monogamy'], ['polygamy', lang === 'fr' ? 'Polygamie' : 'Polygamy']]} />
-              <Field label={t('reg_property')} name="property_regime" options={[['common', lang === 'fr' ? 'Biens communs' : 'Common'], ['separate', lang === 'fr' ? 'Biens séparés' : 'Separate']]} />
-              <Field label={t('reg_cni')} name="cni_number" />
-              <Field label={t('reg_cni_date')} name="cni_date" type="date" />
-              <Field label={t('reg_cni_place')} name="cni_place" />
-              <Field label={t('reg_dob')} name="dob" type="date" />
-              <Field label={t('reg_pob')} name="pob" />
-              <Field label={t('reg_nationality')} name="nationality" />
-              <Field label={t('reg_village')} name="village" />
-              <Field label={t('reg_niu')} name="niu" />
-              <Field label={t('reg_matricule')} name="matricule" />
-              <Field label={t('reg_account_no')} name="account_no" />
+              {field({ label: t('reg_surname'), name: "surname", req: true })}
+              {field({ label: t('reg_given'), name: "given_names", req: true })}
+              {field({ label: t('reg_sex'), name: "gender", options: [['male', lang === 'fr' ? 'Masculin' : 'Male'], ['female', lang === 'fr' ? 'Féminin' : 'Female']] })}
+              {field({ label: t('reg_marital'), name: "marital_status", options: [['single', lang === 'fr' ? 'Célibataire' : 'Single'], ['married', lang === 'fr' ? 'Marié(e)' : 'Married'], ['divorced', lang === 'fr' ? 'Divorcé(e)' : 'Divorced'], ['widowed', lang === 'fr' ? 'Veuf/Veuve' : 'Widowed']] })}
+              {field({ label: t('reg_regime'), name: "matrimonial_regime", options: [['monogamy', lang === 'fr' ? 'Monogamie' : 'Monogamy'], ['polygamy', lang === 'fr' ? 'Polygamie' : 'Polygamy']] })}
+              {field({ label: t('reg_property'), name: "property_regime", options: [['common', lang === 'fr' ? 'Biens communs' : 'Common'], ['separate', lang === 'fr' ? 'Biens séparés' : 'Separate']] })}
+              {field({ label: t('reg_cni'), name: "cni_number" })}
+              {field({ label: t('reg_cni_date'), name: "cni_date", type: "date" })}
+              {field({ label: t('reg_cni_place'), name: "cni_place" })}
+              {field({ label: t('reg_dob'), name: "dob", type: "date" })}
+              {field({ label: t('reg_pob'), name: "pob" })}
+              {field({ label: t('reg_nationality'), name: "nationality" })}
+              {field({ label: t('reg_village'), name: "village" })}
+              {field({ label: t('reg_niu'), name: "niu" })}
+              {field({ label: t('reg_matricule'), name: "matricule" })}
+              {field({ label: t('reg_account_no'), name: "account_no" })}
             </div>
           ) : (
             <div className="grid2">
-              <Field label={t('reg_company')} name="company_name" req full />
-              <Field label={t('reg_legal_form')} name="legal_form" />
-              <Field label={t('reg_rccm')} name="rccm_no" />
-              <Field label={t('reg_hq')} name="registered_office" />
-              <Field label={t('reg_niu')} name="niu" />
-              <Field label={t('reg_matricule')} name="matricule" />
-              <Field label={t('reg_account_no')} name="account_no" />
+              {field({ label: t('reg_company'), name: "company_name", req: true, full: true })}
+              {field({ label: t('reg_legal_form'), name: "legal_form" })}
+              {field({ label: t('reg_rccm'), name: "rccm_no" })}
+              {field({ label: t('reg_hq'), name: "registered_office" })}
+              {field({ label: t('reg_niu'), name: "niu" })}
+              {field({ label: t('reg_matricule'), name: "matricule" })}
+              {field({ label: t('reg_account_no'), name: "account_no" })}
             </div>
           )}
         </div>
@@ -174,23 +179,23 @@ export default function Register() {
           <div className="card-legend">{t('reg_g_branch')}</div>
           <p className="muted" style={{ fontSize: 12.5, marginTop: -6, marginBottom: 14 }}>{t('reg_branch_hint')}</p>
           <div className="grid2">
-            <Field label={t('reg_branch')} name="branch" req options={BRANCHES.map((b) => [b, b === HEADQUARTERS ? `${b} (HQ)` : b])} />
+            {field({ label: t('reg_branch'), name: "branch", req: true, options: BRANCHES.map((b) => [b, b === HEADQUARTERS ? `${b} (HQ)` : b]) })}
           </div>
         </div>
 
         <div className="card">
           <div className="card-legend">{t('reg_g_contact')}</div>
           <div className="grid2">
-            <Field label={t('reg_tel')} name="phone" type="tel" req />
-            <Field label={t('reg_pobox')} name="po_box" />
-            <Field label={t('reg_res_address')} name="residential_address" full />
-            <Field label={t('reg_work_address')} name="work_address" full />
-            <Field label={t('reg_elected')} name="is_elected" options={yesNo} />
-            <Field label={t('reg_friends')} name="friends_at_union" />
-            <Field label={t('reg_duration')} name="membership_duration" />
-            <Field label={t('reg_coobligor')} name="coobligor_elsewhere" options={yesNo} />
-            <Field label={t('reg_spouse')} name="spouse_name" />
-            <Field label={t('reg_spouse_contact')} name="spouse_contact" />
+            {field({ label: t('reg_tel'), name: "phone", type: "tel", req: true })}
+            {field({ label: t('reg_pobox'), name: "po_box" })}
+            {field({ label: t('reg_res_address'), name: "residential_address", full: true })}
+            {field({ label: t('reg_work_address'), name: "work_address", full: true })}
+            {field({ label: t('reg_elected'), name: "is_elected", options: yesNo })}
+            {field({ label: t('reg_friends'), name: "friends_at_union" })}
+            {field({ label: t('reg_duration'), name: "membership_duration" })}
+            {field({ label: t('reg_coobligor'), name: "coobligor_elsewhere", options: yesNo })}
+            {field({ label: t('reg_spouse'), name: "spouse_name" })}
+            {field({ label: t('reg_spouse_contact'), name: "spouse_contact" })}
           </div>
         </div>
 
@@ -198,27 +203,27 @@ export default function Register() {
           <div className="card">
             <div className="card-legend">{t('reg_g_physical')}</div>
             <div className="grid2">
-              <Field label={t('reg_profession')} name="profession" />
-              <Field label={t('reg_position')} name="position" />
-              <Field label={t('reg_employer')} name="employer" />
-              <Field label={t('reg_employer_addr')} name="employer_address" />
-              <Field label={t('reg_net_salary')} name="net_salary" amount />
-              <Field label={t('reg_seniority')} name="seniority" />
-              <Field label={t('reg_retire_date')} name="retirement_date" type="date" />
-              <Field label={t('reg_spouse_salary')} name="spouse_salary" amount />
-              <Field label={t('reg_other_income')} name="other_income" full />
+              {field({ label: t('reg_profession'), name: "profession" })}
+              {field({ label: t('reg_position'), name: "position" })}
+              {field({ label: t('reg_employer'), name: "employer" })}
+              {field({ label: t('reg_employer_addr'), name: "employer_address" })}
+              {field({ label: t('reg_net_salary'), name: "net_salary", amount: true })}
+              {field({ label: t('reg_seniority'), name: "seniority" })}
+              {field({ label: t('reg_retire_date'), name: "retirement_date", type: "date" })}
+              {field({ label: t('reg_spouse_salary'), name: "spouse_salary", amount: true })}
+              {field({ label: t('reg_other_income'), name: "other_income", full: true })}
             </div>
           </div>
         ) : (
           <div className="card">
             <div className="card-legend">{t('reg_g_business')}</div>
             <div className="grid2">
-              <Field label={t('reg_sector')} name="business_sector" />
-              <Field label={t('reg_seniority_biz')} name="business_seniority" />
-              <Field label={t('reg_taxpayer')} name="taxpayer_card" />
-              <Field label={t('reg_license')} name="license_no" />
-              <Field label={t('reg_cnps')} name="cnps_no" />
-              <Field label={t('reg_rep')} name="representative_name" />
+              {field({ label: t('reg_sector'), name: "business_sector" })}
+              {field({ label: t('reg_seniority_biz'), name: "business_seniority" })}
+              {field({ label: t('reg_taxpayer'), name: "taxpayer_card" })}
+              {field({ label: t('reg_license'), name: "license_no" })}
+              {field({ label: t('reg_cnps'), name: "cnps_no" })}
+              {field({ label: t('reg_rep'), name: "representative_name" })}
             </div>
           </div>
         )}
@@ -254,7 +259,7 @@ export default function Register() {
         <div className="card">
           <div className="card-legend">{t('reg_g_login')}</div>
           <div className="grid2">
-            <Field label={t('reg_email')} name="email" type="email" req full />
+            {field({ label: t('reg_email'), name: "email", type: "email", req: true, full: true })}
             <div className="field">
               <label>{t('reg_password')}<span className="req">*</span></label>
               <input type="password" value={form.password || ''} onChange={set('password')} autoComplete="new-password" />
