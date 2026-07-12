@@ -82,7 +82,11 @@ export default function Login() {
         <p className="auth-sub">{c?.subheading || (lang === 'fr' ? 'Connectez-vous à vos comptes et prêts.' : 'Sign in to access your accounts and loans.')}</p>
         {sessionEndedReason && !error && (
           <div className="alert alert-error">
-            {sessionEndedReason === 'revoked' ? t('session_revoked_notice') : t('session_expired_notice')}
+            {sessionEndedReason === 'revoked'
+              ? t('session_revoked_notice')
+              : sessionEndedReason === 'idle'
+                ? t('session_idle_notice')
+                : t('session_expired_notice')}
           </div>
         )}
         {error && <div className="alert alert-error">{error}</div>}

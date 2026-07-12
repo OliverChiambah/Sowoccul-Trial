@@ -88,14 +88,32 @@ export const DEFAULT_CONTENT = {
   },
   team: {
     president: { name: '', role: 'President, Board of Directors', photo: '' },
-    gm: { name: '', role: 'General Manager', photo: '' },
+    gm: { name: 'Kemonde David', role: 'General Manager', phone: '677 65 22 18', email: 'd.kemonde@gmail.com', photo: '' },
+    leadership: [
+      { name: 'Tanga Eric', role: 'Chief of Lending', phone: '680 36 53 75', email: 'tangatanyi@gmail.com', photo: '' },
+      { name: 'Akongoh Valery', role: 'Internal Controller', phone: '676 10 22 91', email: 'akongohvalery@yahoo.com', photo: '' },
+    ],
     managers: [
-      { name: '', role: 'Branch Manager', branch: 'Limbe (HQ)', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Bamenda', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Douala', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Bafoussam', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Ebolowa', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Yaoundé', photo: '' },
+      { name: 'Zipoh Ophilia', role: 'Branch Manager', branch: 'Limbe (HQ)', phone: '656 92 32 46', email: 'zipohophil@gmail.com', photo: '' },
+      { name: 'Awah Genevieve', role: 'Branch Manager', branch: 'Bamenda', phone: '693 37 18 28', email: 'mahbih@gmail.com', photo: '' },
+      { name: 'Etone Samuel', role: 'Branch Manager', branch: 'Douala', phone: '677 96 00 72', email: 'siretone2002@yahoo.com', photo: '' },
+      { name: 'Mbah Victoria', role: 'Branch Manager', branch: 'Bafoussam', phone: '677 83 08 94', email: 'Victoriambah931@gmail.com', photo: '' },
+      { name: 'Elate Roland', role: 'Branch Manager', branch: 'Garoua', phone: '676 78 53 22', email: 'rolandelate@gmail.com', photo: '' },
+      { name: 'Enow Franklin', role: 'Branch Manager', branch: 'Yaoundé', phone: '675 93 88 24', email: 'enow2frank@yahoo.com', photo: '' },
+    ],
+  },
+  // Board of Directors. Placeholder members for now — names, roles and photos
+  // are admin-editable and served from the API, exactly like the team section.
+  // The chair sits at the top; the other directors follow in a grid.
+  board: {
+    chair: { name: '', role: 'Chairperson, Board of Directors', photo: '' },
+    directors: [
+      { name: '', role: 'Vice-Chairperson', photo: '' },
+      { name: '', role: 'Secretary', photo: '' },
+      { name: '', role: 'Treasurer', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+      { name: '', role: 'Director', photo: '' },
     ],
   },
   careers: {

@@ -70,3 +70,23 @@ export async function api(path, { method = 'GET', body, signal } = {}) {
   }
   return data;
 }
+
+/**
+ * Fetch a binary file (e.g. a PDF) from an authenticated endpoint and return it
+ * as a Blob, sending the auth token in the header. Use this for downloads that
+ * can't be a plain <a href> because they need authorization.
+ */
+export async function apiBlob(path) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}/api${path}`, { headers });
+  if (!res.ok) {
+    let data = null;
+    try { data = await res.json(); } catch { /* not json */ }
+    const err = new Error(data?.error || 'Could not download the file.');
+    err.status = res.status;
+    throw err;
+  }
+  return res.blob();
+}

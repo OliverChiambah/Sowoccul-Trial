@@ -19,7 +19,7 @@ test('IT admin can NOT view member financial data by branch', () => {
 test('General Manager still edits and views every branch', () => {
   assert.equal(canEditBranch({ role: 'manager' }, 'Limbe'), true);
   assert.equal(canEditBranch({ role: 'manager' }, 'Bamenda'), true);
-  assert.equal(canViewBranch({ role: 'manager' }, 'Ebolowa'), true);
+  assert.equal(canViewBranch({ role: 'manager' }, 'Garoua'), true);
 });
 
 test('branch staff edit only their own branch and only with edit rights', () => {
