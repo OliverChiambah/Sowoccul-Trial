@@ -13,9 +13,11 @@ import { validateImageDataUrl } from '../lib/image.js';
 import { validate, v } from '../lib/validate.js';
 import { getApprovalThreshold, setApprovalThreshold, getRequire2fa, setRequire2fa, getMemberGraceStart, memberGraceStatus, MEMBER_GRACE_DAYS, twofaHardForced } from '../lib/settings.js';
 import { canApprovePending } from '../lib/maker-checker.js';
+import { canDeleteUser, performDeletion, financialFootprint } from '../lib/user-deletion.js';
 import { notify } from '../lib/notify.js';
 import { postToAccount } from '../lib/post-money.js';
 import { reconcile, trialBalance } from '../lib/ledger.js';
+import { issueVerification, markVerifiedByAdmin, TTL_HOURS } from '../lib/email-verify.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requirePasswordChanged, requireRole('staff', 'manager', 'admin'));
@@ -176,15 +178,94 @@ adminRouter.get('/members/:id', blockFinancialAdmin, ah(async (req, res) => {
   // The client uses this to show/hide edit controls; the server still enforces on write.
   const may_edit = canEditBranch(req.user, member.branch);
   const all_branches = req.user.role === 'manager';
-  res.json({ member, accounts, outstanding, may_edit, all_branches });
+  // Whether THIS viewer may admit / request info: GM anywhere, or a branch
+  // manager for this member's branch. Mirrors canReviewMember on the write side.
+  const can_review = req.user.role === 'manager'
+    || (req.user.role === 'staff' && req.user.title === 'branch_manager' && req.user.branch === member.branch);
+  res.json({ member, accounts, outstanding, may_edit, all_branches, can_review });
 }));
 
-/** POST /api/admin/members/:id/mark-reviewed — clears the pending_review flag. */
-adminRouter.post('/members/:id/mark-reviewed', blockFinancialAdmin, requireEditMember(), ah(async (req, res) => {
-  await db.run("UPDATE users SET review_status = 'active' WHERE id = $1", [req.member.id]);
-  await record(req, 'member.reviewed', {
-    targetType: 'member', targetId: req.member.id, branch: req.member.branch,
-    summary: `Marked ${req.member.full_name} as reviewed`,
+/**
+ * Who may admit a member or ask them for more info: the General Manager (any
+ * branch) or a Branch Manager (staff with title 'branch_manager') for their own
+ * branch. Mirrors the maker-checker approval rule. The IT admin and ordinary
+ * staff are excluded on purpose — admission is a managerial decision.
+ */
+function canReviewMember(user, memberBranch) {
+  if (!user) return false;
+  if (user.role === 'manager') return true;
+  if (user.role === 'staff' && user.title === 'branch_manager') {
+    return Boolean(user.branch && memberBranch && user.branch === memberBranch);
+  }
+  return false;
+}
+
+/**
+ * POST /api/admin/members/:id/admit  { note? } — the branch manager (or GM)
+ * approves a pending member. Flips review_status to 'active' and emails the
+ * member a welcome note telling them how to sign in (email as username, plus the
+ * password they chose at registration — we never store or resend the actual
+ * password). An optional note is included in the email.
+ */
+adminRouter.post('/members/:id/admit', blockFinancialAdmin, ah(async (req, res) => {
+  const member = await db.one(
+    "SELECT id, full_name, email, branch, review_status, languages FROM users WHERE id = $1 AND role = 'member'",
+    [req.params.id]
+  );
+  if (!member) return res.status(404).json({ error: 'Member not found.' });
+  if (!canReviewMember(req.user, member.branch)) {
+    return res.status(403).json({ error: 'Only the branch manager or General Manager can admit a member.' });
+  }
+  if (member.review_status === 'active') {
+    return res.status(409).json({ error: 'This member has already been admitted.' });
+  }
+  const note = String(req.body?.note || '').trim().slice(0, 500) || null;
+
+  await db.run("UPDATE users SET review_status = 'active' WHERE id = $1", [member.id]);
+
+  const base = (process.env.PUBLIC_APP_URL || '').replace(/\/$/, '');
+  const loginUrl = `${base || ''}/login`;
+  notify.memberAdmitted(member.id, {
+    email: member.email,
+    branch: member.branch,
+    loginUrl,
+    note,
+  });
+
+  await record(req, 'member.admitted', {
+    targetType: 'member', targetId: member.id, branch: member.branch,
+    summary: `Admitted ${member.full_name}${note ? ' (with note)' : ''}`,
+  });
+  res.json({ ok: true });
+}));
+
+/**
+ * POST /api/admin/members/:id/request-info  { message } — the branch manager (or
+ * GM) tells a pending applicant what's missing. Keeps the member pending and
+ * emails them the manager's message. Requires a non-empty message.
+ */
+adminRouter.post('/members/:id/request-info', blockFinancialAdmin, ah(async (req, res) => {
+  const member = await db.one(
+    "SELECT id, full_name, email, branch, review_status, languages FROM users WHERE id = $1 AND role = 'member'",
+    [req.params.id]
+  );
+  if (!member) return res.status(404).json({ error: 'Member not found.' });
+  if (!canReviewMember(req.user, member.branch)) {
+    return res.status(403).json({ error: 'Only the branch manager or General Manager can message an applicant.' });
+  }
+  const message = String(req.body?.message || '').trim();
+  if (!message) return res.status(400).json({ error: 'Type the message telling the applicant what is missing.' });
+  if (message.length > 1000) return res.status(400).json({ error: 'Message is too long (max 1000 characters).' });
+
+  // Member stays pending; we just notify them what's needed.
+  notify.memberMoreInfo(member.id, {
+    branch: member.branch,
+    message,
+  });
+
+  await record(req, 'member.info_requested', {
+    targetType: 'member', targetId: member.id, branch: member.branch,
+    summary: `Requested more information from ${member.full_name}`,
   });
   res.json({ ok: true });
 }));
@@ -435,13 +516,14 @@ adminRouter.get('/settings', requireRole('manager', 'admin'), ah(async (req, res
   });
 }));
 
-/** PUT /api/admin/settings/require-2fa — require 2FA for staff and/or members (admin only).
+/** PUT /api/admin/settings/require-2fa — require 2FA for staff and/or members
+ *  (General Manager or IT administrator).
  *  Accepts either { level } ('off'|'staff'|'all') or two independent booleans
  *  { require_staff, require_members } which map to a level:
  *    neither → 'off',  staff only → 'staff',  both (or members) → 'all'.
  *  Nobody is hard-locked out: users without 2FA are walked through setup at next
  *  login (members get a 10-day grace period first). */
-adminRouter.put('/settings/require-2fa', requireRole('admin'), ah(async (req, res) => {
+adminRouter.put('/settings/require-2fa', requireRole('manager', 'admin'), ah(async (req, res) => {
   try {
     let level = req.body?.level;
     if (level === undefined) {
@@ -462,8 +544,11 @@ adminRouter.put('/settings/require-2fa', requireRole('admin'), ah(async (req, re
   }
 }));
 
-/** PUT /api/admin/settings/threshold — change the approval threshold (admin only). */
-adminRouter.put('/settings/threshold', requireRole('admin'), ah(async (req, res) => {
+/** PUT /api/admin/settings/threshold — change the large-transaction approval
+ *  limit. This is a financial control, so ONLY the General Manager (role
+ *  'manager') may change it. The IT administrator can still read it via
+ *  GET /settings but cannot set it. */
+adminRouter.put('/settings/threshold', requireRole('manager'), ah(async (req, res) => {
   try {
     const value = await setApprovalThreshold(req.body?.amount, req.user.id);
     await record(req, 'settings.threshold', { summary: `Set approval threshold to ${value} FCFA` });
@@ -518,7 +603,88 @@ adminRouter.put('/content/:section', requireRole('admin'), ah(async (req, res) =
   res.json({ ok: true, section, data: saved });
 }));
 
-/* ── Staff creates a member directly ─────────────────────────────────────── */
+/* ── Job applications (Careers) — General Manager + IT administrator ──────────
+ * Applications submitted from the public Careers page. Both the GM and the IT
+ * admin may review and download them. The list and detail views never include
+ * the raw PDF bytes (those are large); the PDFs are fetched separately via the
+ * download endpoints so the list stays light.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** GET /api/admin/applications?status=new — list job applications (no PDF bytes). */
+adminRouter.get('/applications', requireRole('manager', 'admin'), ah(async (req, res) => {
+  const status = req.query.status;
+  const params = [];
+  let where = '';
+  if (status && ['new', 'reviewed', 'shortlisted', 'rejected'].includes(String(status))) {
+    params.push(String(status));
+    where = `WHERE status = $${params.length}`;
+  }
+  const rows = await db.all(
+    `SELECT id, position, branch, full_name, email, phone, dob, address, education, experience, message,
+            cv_filename, cover_filename,
+            (cv_data IS NOT NULL) AS has_cv, (cover_data IS NOT NULL) AS has_cover,
+            status, reviewed_by_name, review_note, created_at, reviewed_at
+       FROM job_applications ${where}
+      ORDER BY (status = 'new') DESC, created_at DESC`,
+    params
+  );
+  res.json({ applications: rows });
+}));
+
+/** GET /api/admin/applications/:id — one application's details (no PDF bytes). */
+adminRouter.get('/applications/:id', requireRole('manager', 'admin'), ah(async (req, res) => {
+  const a = await db.one(
+    `SELECT id, position, branch, full_name, email, phone, dob, address, education, experience, message,
+            cv_filename, cover_filename,
+            (cv_data IS NOT NULL) AS has_cv, (cover_data IS NOT NULL) AS has_cover,
+            status, reviewed_by_name, review_note, created_at, reviewed_at
+       FROM job_applications WHERE id = $1`,
+    [req.params.id]
+  );
+  if (!a) return res.status(404).json({ error: 'Application not found.' });
+  res.json({ application: a });
+}));
+
+/** Shared: stream one of an application's PDFs as a download. */
+async function sendApplicationPdf(req, res, which) {
+  const col = which === 'cover' ? 'cover_data' : 'cv_data';
+  const nameCol = which === 'cover' ? 'cover_filename' : 'cv_filename';
+  const a = await db.one(`SELECT ${col} AS data, ${nameCol} AS filename, full_name FROM job_applications WHERE id = $1`, [req.params.id]);
+  if (!a || !a.data) return res.status(404).json({ error: 'No file on this application.' });
+  const base64 = String(a.data).split(',')[1] || '';
+  const buf = Buffer.from(base64, 'base64');
+  const safe = (a.filename || `${which}.pdf`).replace(/[^a-zA-Z0-9._-]/g, '_');
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${safe}"`);
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.end(buf);
+}
+
+/** GET /api/admin/applications/:id/cv — download/view the CV PDF. */
+adminRouter.get('/applications/:id/cv', requireRole('manager', 'admin'), ah((req, res) => sendApplicationPdf(req, res, 'cv')));
+
+/** GET /api/admin/applications/:id/cover — download/view the cover letter PDF. */
+adminRouter.get('/applications/:id/cover', requireRole('manager', 'admin'), ah((req, res) => sendApplicationPdf(req, res, 'cover')));
+
+/** POST /api/admin/applications/:id/status { status, note? } — record a decision. */
+adminRouter.post('/applications/:id/status', requireRole('manager', 'admin'), ah(async (req, res) => {
+  const status = String(req.body?.status || '');
+  if (!['reviewed', 'shortlisted', 'rejected', 'new'].includes(status)) {
+    return res.status(400).json({ error: 'Choose a valid status.' });
+  }
+  const a = await db.one('SELECT id, full_name FROM job_applications WHERE id = $1', [req.params.id]);
+  if (!a) return res.status(404).json({ error: 'Application not found.' });
+  const note = String(req.body?.note || '').trim().slice(0, 1000) || null;
+  await db.run(
+    `UPDATE job_applications SET status = $1, review_note = $2, reviewed_by = $3, reviewed_by_name = $4, reviewed_at = now() WHERE id = $5`,
+    [status, note, req.user.id, req.user.name, a.id]
+  );
+  await record(req, 'application.status', {
+    targetType: 'application', targetId: a.id,
+    summary: `Marked application from ${a.full_name} as ${status}`,
+  });
+  res.json({ ok: true, status });
+}));
 
 /**
  * POST /api/admin/members  — staff/admin create a member account.
@@ -789,14 +955,155 @@ adminRouter.put('/staff/:id/edit-rights', requireRole('admin'), ah(async (req, r
   res.json({ ok: true, can_edit: grant });
 }));
 
-/** DELETE /api/admin/staff/:id — remove a staff or manager account (admin only). */
+/**
+ * DELETE /api/admin/staff/:id — the IT administrator REQUESTS removal of a
+ * staff or manager account. Nobody is deleted here: a pending_deletions row is
+ * created and the General Manager must approve it (see /deletions below). This
+ * keeps a destructive action behind two pairs of eyes.
+ * Optional body: { reason }.
+ */
 adminRouter.delete('/staff/:id', requireRole('admin'), ah(async (req, res) => {
   const staff = await db.one("SELECT id, full_name, role, branch, employee_id FROM users WHERE id = $1 AND role IN ('staff','manager')", [req.params.id]);
   if (!staff) return res.status(404).json({ error: 'Staff member not found.' });
-  await db.run('DELETE FROM users WHERE id = $1', [staff.id]);
-  await record(req, 'staff.remove', {
-    targetType: 'staff', targetId: staff.id, branch: staff.branch,
-    summary: `Removed ${staff.full_name}${staff.employee_id ? ' (' + staff.employee_id + ')' : ''}`,
+  return requestUserDeletion(req, res, staff);
+}));
+
+/**
+ * DELETE /api/admin/members/:id — the IT administrator REQUESTS removal of a
+ * member account. Same rule as staff: this only creates a pending request; the
+ * General Manager approves it before anyone is deleted. A member with financial
+ * history is refused here (the books must stay intact) — close/freeze instead.
+ * Optional body: { reason }.
+ */
+adminRouter.delete('/members/:id', requireRole('admin'), ah(async (req, res) => {
+  const member = await db.one("SELECT id, full_name, role, branch FROM users WHERE id = $1 AND role = 'member'", [req.params.id]);
+  if (!member) return res.status(404).json({ error: 'Member not found.' });
+  return requestUserDeletion(req, res, member);
+}));
+
+/**
+ * Shared: create a pending deletion request for a target user. Refuses if the
+ * user has financial history, if the admin is trying to delete themselves, or if
+ * a request for the same user is already open. On success returns the pending id.
+ */
+async function requestUserDeletion(req, res, target) {
+  if (target.id === req.user.id) {
+    return res.status(400).json({ error: 'You cannot request deletion of your own account.' });
+  }
+  // Financial-safety gate (protects the ledger from orphaned records).
+  const check = await canDeleteUser(target);
+  if (!check.ok) return res.status(409).json({ error: check.error });
+  // One open request per user at a time.
+  const existing = await db.one(
+    "SELECT id FROM pending_deletions WHERE target_id = $1 AND status = 'pending'",
+    [target.id]
+  );
+  if (existing) {
+    return res.status(409).json({ error: 'A deletion request for this user is already awaiting the General Manager.' });
+  }
+  const reason = String(req.body?.reason || '').trim().slice(0, 500) || null;
+  const inserted = await db.one(
+    `INSERT INTO pending_deletions (target_id, target_name, target_role, target_branch, reason, requested_by, requested_by_name)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+    [target.id, target.full_name, target.role, target.branch, reason, req.user.id, req.user.name]
+  );
+  await record(req, 'user.deletion_requested', {
+    targetType: target.role === 'member' ? 'member' : 'staff', targetId: target.id, branch: target.branch,
+    summary: `Requested deletion of ${target.full_name} (${target.role}) — awaiting General Manager approval`,
+  });
+  return res.json({ ok: true, pending_id: inserted.id, status: 'pending_gm_approval' });
+}
+
+/**
+ * GET /api/admin/deletions — the deletion approval queue.
+ * The General Manager sees pending requests they can act on; the IT admin sees
+ * the requests they raised (so they know what's still waiting). Each row carries
+ * can_approve / is_mine so the UI can render the right buttons.
+ */
+adminRouter.get('/deletions', requireRole('manager', 'admin'), ah(async (req, res) => {
+  const rows = await db.all("SELECT * FROM pending_deletions WHERE status = 'pending' ORDER BY created_at ASC");
+  const out = rows.map((p) => ({
+    ...p,
+    // Only the General Manager approves. The requester can never approve their own.
+    can_approve: req.user.role === 'manager' && req.user.id !== p.requested_by,
+    is_mine: req.user.id === p.requested_by,
+  }));
+  res.json({ deletions: out });
+}));
+
+/**
+ * POST /api/admin/deletions/:id/approve — the General Manager approves and the
+ * user is actually deleted now, inside a transaction. Manager-only, and never by
+ * the person who requested it.
+ */
+adminRouter.post('/deletions/:id/approve', requireRole('manager'), ah(async (req, res) => {
+  const pending = await db.one('SELECT * FROM pending_deletions WHERE id = $1', [req.params.id]);
+  if (!pending) return res.status(404).json({ error: 'Request not found.' });
+  if (pending.status !== 'pending') return res.status(409).json({ error: 'This request has already been handled.' });
+  if (pending.requested_by === req.user.id) {
+    return res.status(403).json({ error: 'You cannot approve a deletion you requested yourself.' });
+  }
+  // Make sure the target still exists and is still safe to delete.
+  const target = await db.one('SELECT id, full_name, role, branch FROM users WHERE id = $1', [pending.target_id]);
+  if (!target) {
+    await db.run("UPDATE pending_deletions SET status = 'cancelled', decided_by = $1, decided_by_name = $2, decided_at = now(), decision_note = 'User no longer exists' WHERE id = $3",
+      [req.user.id, req.user.name, pending.id]);
+    return res.status(409).json({ error: 'That user no longer exists; the request was closed.' });
+  }
+  const check = await canDeleteUser(target);
+  if (!check.ok) {
+    await db.run("UPDATE pending_deletions SET status = 'cancelled', decided_by = $1, decided_by_name = $2, decided_at = now(), decision_note = $3 WHERE id = $4",
+      [req.user.id, req.user.name, check.error, pending.id]);
+    return res.status(409).json({ error: check.error });
+  }
+  const note = String(req.body?.note || '').trim().slice(0, 500) || null;
+  await performDeletion(target.id);
+  await db.run(
+    "UPDATE pending_deletions SET status = 'approved', decided_by = $1, decided_by_name = $2, decision_note = $3, decided_at = now() WHERE id = $4",
+    [req.user.id, req.user.name, note, pending.id]
+  );
+  await record(req, 'user.deletion_approved', {
+    targetType: target.role === 'member' ? 'member' : 'staff', targetId: target.id, branch: target.branch,
+    summary: `Approved and deleted ${target.full_name} (${target.role}); requested by ${pending.requested_by_name}`,
+  });
+  res.json({ ok: true });
+}));
+
+/**
+ * POST /api/admin/deletions/:id/reject — the General Manager declines the
+ * request. Nobody is deleted; the request is closed with an optional note.
+ */
+adminRouter.post('/deletions/:id/reject', requireRole('manager'), ah(async (req, res) => {
+  const pending = await db.one('SELECT * FROM pending_deletions WHERE id = $1', [req.params.id]);
+  if (!pending) return res.status(404).json({ error: 'Request not found.' });
+  if (pending.status !== 'pending') return res.status(409).json({ error: 'This request has already been handled.' });
+  const note = String(req.body?.note || '').trim().slice(0, 500) || null;
+  await db.run(
+    "UPDATE pending_deletions SET status = 'rejected', decided_by = $1, decided_by_name = $2, decision_note = $3, decided_at = now() WHERE id = $4",
+    [req.user.id, req.user.name, note, pending.id]
+  );
+  await record(req, 'user.deletion_rejected', {
+    targetType: pending.target_role === 'member' ? 'member' : 'staff', targetId: pending.target_id, branch: pending.target_branch,
+    summary: `Declined deletion of ${pending.target_name}; requested by ${pending.requested_by_name}`,
+  });
+  res.json({ ok: true });
+}));
+
+/**
+ * POST /api/admin/deletions/:id/cancel — the IT administrator withdraws their
+ * own pending request before the GM acts on it.
+ */
+adminRouter.post('/deletions/:id/cancel', requireRole('admin'), ah(async (req, res) => {
+  const pending = await db.one('SELECT * FROM pending_deletions WHERE id = $1', [req.params.id]);
+  if (!pending) return res.status(404).json({ error: 'Request not found.' });
+  if (pending.status !== 'pending') return res.status(409).json({ error: 'This request has already been handled.' });
+  if (pending.requested_by !== req.user.id) {
+    return res.status(403).json({ error: 'You can only cancel a request you raised.' });
+  }
+  await db.run("UPDATE pending_deletions SET status = 'cancelled', decided_at = now() WHERE id = $1", [pending.id]);
+  await record(req, 'user.deletion_cancelled', {
+    targetType: pending.target_role === 'member' ? 'member' : 'staff', targetId: pending.target_id, branch: pending.target_branch,
+    summary: `Withdrew deletion request for ${pending.target_name}`,
   });
   res.json({ ok: true });
 }));
@@ -893,6 +1200,133 @@ adminRouter.post('/staff/:id/reset-2fa', requireRole('admin'), ah(async (req, re
   });
   res.json({ ok: true });
 }));
+
+/* ── Login help (IT administrator) ───────────────────────────────────────────
+ * The IT administrator resolves sign-in problems for ANY user without seeing any
+ * financial data. These routes return only identity and security fields — never
+ * balances, transactions, loans, or account numbers — so the separation of
+ * duties (the admin is walled off from members' money) stays intact.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * GET /api/admin/login-help/search?q=... — find users by name, email, or
+ * username. Returns only identity + security status (role, branch, whether 2FA
+ * is on, whether the account looks locked). Admin only. No financial fields.
+ */
+adminRouter.get('/login-help/search', requireRole('admin'), ah(async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (q.length < 2) return res.json({ users: [] });
+  const like = `%${q.toLowerCase()}%`;
+  const users = await db.all(
+    `SELECT id, full_name, username, email, role, branch, twofa_enabled, must_change_password, review_status, email_verified
+       FROM users
+      WHERE LOWER(full_name) LIKE $1 OR LOWER(email) LIKE $1 OR LOWER(username) LIKE $1
+      ORDER BY role DESC, full_name
+      LIMIT 25`,
+    [like]
+  );
+  res.json({ users });
+}));
+
+/**
+ * POST /api/admin/login-help/:id/reset-2fa — clear 2FA for ANY user (member,
+ * staff, or manager) so they can sign in with just their password and re-enrol.
+ * Admin only, audited, and the user is notified. This is the single place the IT
+ * administrator fixes 2FA lockouts across the whole system.
+ */
+adminRouter.post('/login-help/:id/reset-2fa', requireRole('admin'), ah(async (req, res) => {
+  const u = await db.one('SELECT id, full_name, branch, role FROM users WHERE id = $1', [req.params.id]);
+  if (!u) return res.status(404).json({ error: 'User not found.' });
+  await db.tx(async (t) => {
+    await t.run('UPDATE users SET twofa_enabled = 0, twofa_secret = NULL, token_version = token_version + 1 WHERE id = $1', [u.id]);
+    await t.run('DELETE FROM recovery_codes WHERE user_id = $1', [u.id]);
+  });
+  await record(req, 'twofa.admin_reset', {
+    targetType: u.role === 'member' ? 'member' : 'user', targetId: u.id, branch: u.branch,
+    summary: `Reset two-factor authentication for ${u.full_name} (login help)`,
+  });
+  notify.security(u.id, {
+    title: 'Two-factor authentication reset',
+    message: 'An administrator has reset the two-factor authentication on your account. You can sign in with your password and set it up again.',
+  });
+  res.json({ ok: true });
+}));
+
+/**
+ * POST /api/admin/login-help/:id/force-password-reset — set the "must change
+ * password" flag and revoke sessions, so the user is required to set a new
+ * password at next sign-in. Useful when someone is locked out or a password may
+ * be compromised. Admin only, audited, user notified. Does NOT set a password
+ * (the admin never handles passwords directly).
+ */
+adminRouter.post('/login-help/:id/force-password-reset', requireRole('admin'), ah(async (req, res) => {
+  const u = await db.one('SELECT id, full_name, branch, role FROM users WHERE id = $1', [req.params.id]);
+  if (!u) return res.status(404).json({ error: 'User not found.' });
+  await db.run('UPDATE users SET must_change_password = 1, token_version = token_version + 1 WHERE id = $1', [u.id]);
+  await record(req, 'user.force_password_reset', {
+    targetType: u.role === 'member' ? 'member' : 'user', targetId: u.id, branch: u.branch,
+    summary: `Required a password change at next login for ${u.full_name} (login help)`,
+  });
+  notify.security(u.id, {
+    title: 'Password change required',
+    message: 'For your security, an administrator has asked you to set a new password the next time you sign in.',
+  });
+  res.json({ ok: true });
+}));
+
+/**
+ * POST /api/admin/login-help/:id/resend-verification — re-issue email
+ * verification for a MEMBER whose email isn't verified yet. Generates a FRESH
+ * link and 6-digit code, enqueues the email (delivered if a provider is set),
+ * and — because the codes are stored hashed and can't be looked up — returns the
+ * new code and link in the response so the administrator can read them to the
+ * member over the phone or in person. Admin only, audited.
+ */
+adminRouter.post('/login-help/:id/resend-verification', requireRole('admin'), ah(async (req, res) => {
+  const u = await db.one("SELECT id, full_name, email, role, email_verified FROM users WHERE id = $1", [req.params.id]);
+  if (!u) return res.status(404).json({ error: 'User not found.' });
+  if (u.role !== 'member') return res.status(400).json({ error: 'Only member accounts use email verification.' });
+  if (!u.email) return res.status(400).json({ error: 'This account has no email address on file.' });
+  if (u.email_verified) return res.status(409).json({ error: 'This member’s email is already verified.' });
+
+  const { token, code, expiresAt } = await issueVerification(u.id, u.email);
+  const base = (process.env.PUBLIC_APP_URL || '').replace(/\/$/, '');
+  const link = `${base || ''}/verify-email?token=${token}`;
+  // Also enqueue the email so it's delivered if/when a provider is configured.
+  notify.verifyEmail(u.id, { link, code, hours: TTL_HOURS, name: (u.full_name || '').split(' ')[0] || u.full_name });
+
+  await record(req, 'user.verification_resent', {
+    targetType: 'member', targetId: u.id,
+    summary: `Re-issued email verification for ${u.full_name} (login help)`,
+  });
+  // The code/link are returned to the admin ONLY here so they can pass them on.
+  res.json({ ok: true, code, link, email: u.email, expires_at: expiresAt });
+}));
+
+/**
+ * POST /api/admin/login-help/:id/verify-email — manually mark a MEMBER's email
+ * as verified, for the support case where email genuinely can't reach them and
+ * the administrator has confirmed identity another way. This lets the member
+ * sign in. Admin only, audited, and the member is notified.
+ */
+adminRouter.post('/login-help/:id/verify-email', requireRole('admin'), ah(async (req, res) => {
+  const u = await db.one("SELECT id, full_name, role, branch, email_verified FROM users WHERE id = $1", [req.params.id]);
+  if (!u) return res.status(404).json({ error: 'User not found.' });
+  if (u.role !== 'member') return res.status(400).json({ error: 'Only member accounts use email verification.' });
+  if (u.email_verified) return res.status(409).json({ error: 'This member’s email is already verified.' });
+
+  await markVerifiedByAdmin(u.id);
+  await record(req, 'user.email_verified_by_admin', {
+    targetType: 'member', targetId: u.id, branch: u.branch,
+    summary: `Manually verified email for ${u.full_name} (login help)`,
+  });
+  notify.security(u.id, {
+    title: 'Your account is verified',
+    message: 'An administrator has verified your email address. You can now sign in to your account.',
+  });
+  res.json({ ok: true });
+}));
+
 /**
  * GET /api/admin/ledger/reconcile — prove the books balance.
  * Returns the global trial balance (all journal lines must sum to zero) and a

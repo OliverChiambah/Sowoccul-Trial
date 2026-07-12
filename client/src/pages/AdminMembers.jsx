@@ -144,13 +144,36 @@ function MemberDetail({ data, onBack, onRefresh }) {
   const isRepay = kind === 'repayment';
   const [branch, setBranch] = useState(member.branch || HEADQUARTERS);
 
-  async function markReviewed() {
-    setMsg('');
+  const [reviewMsg, setReviewMsg] = useState('');   // manager's "what's missing" text
+  const [showInfoBox, setShowInfoBox] = useState(false);
+  const [admitNote, setAdmitNote] = useState('');
+  const [reviewBusy, setReviewBusy] = useState(false);
+  // Who may admit / request info: GM (role manager) or a branch manager for this
+  // member's branch. The server enforces this too; we mirror it to show controls.
+  const canReview = data.can_review === true;
+
+  async function admit() {
+    if (reviewBusy) return;
+    setReviewBusy(true); setMsg('');
     try {
-      await api(`/admin/members/${member.id}/mark-reviewed`, { method: 'POST' });
-      setMsg(t('reviewed_done'));
+      await api(`/admin/members/${member.id}/admit`, { method: 'POST', body: { note: admitNote.trim() || undefined } });
+      setMsg(t('admit_done'));
       onRefresh();
     } catch (err) { setMsg(err.message); }
+    finally { setReviewBusy(false); }
+  }
+
+  async function requestInfo() {
+    if (reviewBusy) return;
+    if (!reviewMsg.trim()) { setMsg(t('request_info_empty')); return; }
+    setReviewBusy(true); setMsg('');
+    try {
+      await api(`/admin/members/${member.id}/request-info`, { method: 'POST', body: { message: reviewMsg.trim() } });
+      setMsg(t('request_info_done'));
+      setReviewMsg(''); setShowInfoBox(false);
+      onRefresh();
+    } catch (err) { setMsg(err.message); }
+    finally { setReviewBusy(false); }
   }
 
   async function saveBranch(newBranch) {
@@ -224,12 +247,41 @@ function MemberDetail({ data, onBack, onRefresh }) {
       </div>
 
       {member.review_status === 'pending_review' && (
-        <div className="alert" style={{ background: 'var(--amber-light)', color: 'var(--amber)', border: '1px solid rgba(183,121,31,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span><strong>{t('new_registrations')}.</strong> {t('reg_intro')}</span>
-          {mayEdit && <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={markReviewed}>{t('mark_reviewed')}</button>}
+        <div className="card" style={{ background: 'var(--amber-light)', border: '1px solid rgba(183,121,31,0.25)' }}>
+          <div className="card-legend" style={{ color: 'var(--amber)' }}>{t('review_new_member')}</div>
+          <p className="muted" style={{ fontSize: 13.5, marginTop: -4, marginBottom: 14 }}>{t('review_new_member_hint')}</p>
+
+          {!canReview ? (
+            <p className="muted" style={{ fontSize: 13 }}>{t('review_manager_only')}</p>
+          ) : (
+            <>
+              {/* Admit: approve and email the welcome/login note. Optional message. */}
+              <div className="field">
+                <label>{t('admit_note_label')}</label>
+                <textarea rows={2} value={admitNote} onChange={(e) => setAdmitNote(e.target.value)} placeholder={t('admit_note_ph')} />
+              </div>
+              <div className="btn-row" style={{ marginBottom: 4 }}>
+                <button className="btn btn-primary" onClick={admit} disabled={reviewBusy}>{t('admit_member')}</button>
+                <button className="btn btn-ghost" onClick={() => setShowInfoBox((s) => !s)} disabled={reviewBusy}>
+                  {showInfoBox ? t('request_info_close') : t('request_info_open')}
+                </button>
+              </div>
+
+              {/* Request more info: keep pending, email what's missing. */}
+              {showInfoBox && (
+                <div className="field" style={{ marginTop: 10 }}>
+                  <label>{t('request_info_label')}</label>
+                  <textarea rows={4} value={reviewMsg} onChange={(e) => setReviewMsg(e.target.value)} placeholder={t('request_info_ph')} />
+                  <div className="btn-row" style={{ marginTop: 8 }}>
+                    <button className="btn btn-primary" onClick={requestInfo} disabled={reviewBusy || !reviewMsg.trim()}>{t('request_info_send')}</button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
-      {msg && <div className={`alert ${msg === t('posted') || msg === t('reviewed_done') ? 'alert-ok' : 'alert-error'}`}>{msg}</div>}
+      {msg && <div className={`alert ${msg === t('posted') || msg === t('admit_done') || msg === t('request_info_done') ? 'alert-ok' : 'alert-error'}`}>{msg}</div>}
 
       {profileEntries.length > 0 && (
         <div className="card">

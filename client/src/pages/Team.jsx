@@ -10,7 +10,7 @@ function initials(name) {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
 }
 
-function TeamMember({ name, role, branch, photo, variant = 'manager' }) {
+function TeamMember({ name, role, branch, phone, email, photo, variant = 'manager' }) {
   const filled = Boolean(name && name.trim());
   const ring = variant === 'president' ? 'var(--green-700)' : variant === 'gm' ? 'var(--blue-700)' : 'var(--navy)';
   const size = variant === 'president' ? 88 : variant === 'gm' ? 96 : 72;
@@ -30,6 +30,8 @@ function TeamMember({ name, role, branch, photo, variant = 'manager' }) {
       <div className="team-name">{filled ? name : 'To be announced'}</div>
       <div className="team-role">{role}</div>
       {branch && <div className="team-branch">{branch}</div>}
+      {filled && phone && <div className="team-branch">{phone}</div>}
+      {filled && email && <a className="team-branch" href={`mailto:${email}`} style={{ color: 'var(--blue-700)' }}>{email}</a>}
     </div>
   );
 }
@@ -48,6 +50,7 @@ export default function Team() {
 
   const president = team?.president || { role: 'President, Board of Directors' };
   const gm = team?.gm || { role: 'General Manager' };
+  const leadership = team?.leadership || [];
   const branchManagers = team?.managers || [];
 
   return (
@@ -66,7 +69,15 @@ export default function Team() {
         <div className="team-org">
           <div className="team-row team-top"><TeamMember name={president.name} role={president.role} photo={president.photo} variant="president" /></div>
           <div className="team-connector" aria-hidden="true" />
-          <div className="team-row team-center"><TeamMember name={gm.name} role={gm.role} photo={gm.photo} variant="gm" /></div>
+          <div className="team-row team-center"><TeamMember name={gm.name} role={gm.role} phone={gm.phone} email={gm.email} photo={gm.photo} variant="gm" /></div>
+          {leadership.length > 0 && (
+            <>
+              <div className="team-connector" aria-hidden="true" />
+              <div className="team-row team-managers">
+                {leadership.map((m, i) => <TeamMember key={m.role || i} {...m} variant="manager" />)}
+              </div>
+            </>
+          )}
           <div className="team-connector" aria-hidden="true" />
           <div className="team-row team-managers">
             {branchManagers.map((m, i) => <TeamMember key={m.branch || i} {...m} variant="manager" />)}

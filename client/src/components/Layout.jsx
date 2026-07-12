@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import TopBar from './TopBar.jsx';
+import IdleTimeout from './IdleTimeout.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLang } from '../lib/i18n.jsx';
 import { NavIcon } from './NavIcons.jsx';
@@ -27,6 +28,7 @@ export default function Layout() {
   return (
     <>
       <TopBar />
+      <IdleTimeout />
       <div className="layout">
         <nav className="sidenav">
           <div className="nav-group-label">{t('nav_group_banking') || 'Banking'}</div>
@@ -48,6 +50,8 @@ export default function Layout() {
               <Item to="/admin/members" icon="admin_members" tone="blue" label={t('nav_admin_members')} />
               <Item to="/admin/corrections" icon="admin_corrections" tone="blue" label={t('nav_admin_corrections')} />
               {isManagerOrAdmin && <Item to="/admin/audit" icon="admin_audit" tone="blue" label={t('nav_admin_audit')} />}
+              {user.role === 'manager' && <Item to="/admin/applications" icon="apply" tone="blue" label={t('nav_applications')} />}
+              {user.role === 'manager' && <Item to="/admin/settings" icon="settings" tone="blue" label={t('nav_settings')} />}
             </>
           )}
 
@@ -56,6 +60,8 @@ export default function Layout() {
               <div className="nav-group-label">{t('nav_group_admin') || 'Administration'}</div>
               <Item to="/directory" icon="directory" tone="blue" label={t('nav_directory')} />
               <Item to="/admin/staff" icon="admin_staff" tone="blue" label={t('nav_admin_staff')} />
+              <Item to="/admin/login-help" icon="security" tone="blue" label={t('nav_login_help')} />
+              <Item to="/admin/applications" icon="apply" tone="blue" label={t('nav_applications')} />
               <Item to="/admin/settings" icon="settings" tone="blue" label={t('nav_settings')} />
               <Item to="/admin/content" icon="admin_content" tone="blue" label={t('nav_admin_content')} />
               <Item to="/admin/audit" icon="admin_audit" tone="blue" label={t('nav_admin_audit')} />

@@ -230,6 +230,36 @@ export async function initSchema() {
       created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- Job applications submitted from the public Careers page. Personal details,
+    -- education and previous positions are stored as columns; the CV and cover
+    -- letter PDFs are stored inline as base64 data URLs (same simple approach as
+    -- images). Only the General Manager and IT administrator review these.
+    CREATE TABLE IF NOT EXISTS job_applications (
+      id              INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+      position        TEXT,               -- the role applied for (title + branch)
+      branch          TEXT,
+      full_name       TEXT NOT NULL,
+      email           TEXT NOT NULL,
+      phone           TEXT,
+      dob             TEXT,
+      address         TEXT,
+      education       TEXT,               -- free text: schools / qualifications
+      experience      TEXT,               -- free text: previous positions
+      message         TEXT,               -- optional note from the applicant
+      cv_filename     TEXT,
+      cv_data         TEXT,               -- base64 data URL of the CV (application/pdf)
+      cover_filename  TEXT,
+      cover_data      TEXT,               -- base64 data URL of the cover letter (application/pdf)
+      status          TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','reviewed','shortlisted','rejected')),
+      reviewed_by     INTEGER REFERENCES users(id),
+      reviewed_by_name TEXT,
+      review_note     TEXT,
+      created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+      reviewed_at     TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_jobapps_status ON job_applications(status);
+    CREATE INDEX IF NOT EXISTS idx_jobapps_created ON job_applications(created_at DESC);
+
     CREATE TABLE IF NOT EXISTS branches (
       id           INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
       name         TEXT UNIQUE NOT NULL,
@@ -301,6 +331,29 @@ export async function initSchema() {
       created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
       decided_at     TIMESTAMPTZ
     );
+
+    -- Deletion approvals: the IT administrator can REQUEST removal of any user
+    -- (member, staff, or manager), but nobody is actually deleted until the
+    -- General Manager approves. A row in 'pending' status changes nothing; the
+    -- user is only removed when the GM approves. This keeps a destructive action
+    -- behind two pairs of eyes, mirroring the maker-checker rule for money.
+    CREATE TABLE IF NOT EXISTS pending_deletions (
+      id               INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+      target_id        INTEGER NOT NULL REFERENCES users(id),
+      target_name      TEXT,
+      target_role      TEXT,
+      target_branch    TEXT,
+      reason           TEXT,
+      status           TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected','cancelled')),
+      requested_by     INTEGER NOT NULL REFERENCES users(id),
+      requested_by_name TEXT,
+      decided_by       INTEGER REFERENCES users(id),
+      decided_by_name  TEXT,
+      decision_note    TEXT,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+      decided_at       TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_pending_del_status ON pending_deletions(status);
 
     -- Small key/value store for admin-editable settings (e.g. the approval
     -- threshold). Kept generic so future toggles don't need a schema change.

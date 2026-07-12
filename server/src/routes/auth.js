@@ -26,6 +26,7 @@ function publicUser(user) {
     can_edit: user.can_edit ? 1 : 0,
     must_change_password: user.must_change_password ? 1 : 0,
     twofa_enabled: user.twofa_enabled ? 1 : 0,
+    review_status: user.review_status || 'active',
   };
 }
 
@@ -236,6 +237,13 @@ authRouter.post('/register', registerLimiter, ah(async (req, res) => {
     });
   }
 
+  // Phone is part of the minimal mandatory set for a public signup (name,
+  // branch, email, password, phone). Everything else on the form is optional.
+  const phoneInput = String(body.phone || body.tel || '').trim();
+  if (!phoneInput) {
+    return res.status(400).json({ error: 'Enter your phone number.' });
+  }
+
   // Email (username) must be unique.
   const existing = await db.one('SELECT 1 FROM users WHERE username = $1 OR email = $2', [email, email]);
   if (existing) {
@@ -245,7 +253,7 @@ authRouter.post('/register', registerLimiter, ah(async (req, res) => {
   // Store the whole submitted form (minus the passwords) as the profile.
   const { password: _pw, confirm_password: _cpw, ...profileFields } = body;
   const profile = JSON.stringify(profileFields);
-  const phone = String(body.phone || body.tel || '').trim() || null;
+  const phone = phoneInput || null;
 
   const passwordHash = bcrypt.hashSync(password, 10);
 

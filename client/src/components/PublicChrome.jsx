@@ -50,7 +50,13 @@ export function PublicFooter({ onSection }) {
       <div><h5>Products &amp; services</h5><a onClick={() => onSection('services')}>Savings accounts</a><a onClick={() => onSection('services')}>Express Savings</a><a onClick={() => onSection('services')}>Loans</a><a onClick={() => onSection('services')}>Transfers</a></div>
       <div><h5>Our branches</h5>
         {(details && details.length ? details : []).map((b) => (
-          <a key={b.id || b.name} onClick={() => nav(`/branch/${b.id || encodeURIComponent(b.name)}`)} style={{ cursor: 'pointer' }}>
+          <a
+            key={b.id || b.name}
+            href={`/branch/${b.id || encodeURIComponent(b.name)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ cursor: 'pointer' }}
+          >
             {b.name}{b.name === headquarters ? ' (HQ)' : ''}
           </a>
         ))}
