@@ -42,6 +42,57 @@ export const DEFAULT_CONTENT = {
     // Ids of uploaded images to rotate in the hero. Empty = use built-in scenes.
     hero_images: [],
 
+    // ── Mission (from the cooperative's advert) ──────────────────────────
+    mission_eyebrow: 'Our mission',
+    mission_title: 'Improving our members’ lives, together',
+    mission_body: 'Our credit union’s mission is to sustainably improve the living conditions of its members, the general public and their communities, based on a system of mutual solidarity. We offer accessible, efficient microfinance services adapted to local needs.',
+    mission_agm: 'Every year we hold a General Assembly to adopt key resolutions, ensure good governance and assess the sustainability of our business.',
+    mission_tagline: 'SOWOCCUL — 100% Deductions at Source Credit Union · Category 1 MFI',
+
+    // ── Full products and services list (from the advert) ────────────────
+    catalogue_eyebrow: 'Products and services',
+    catalogue_title: 'Everything we offer our members',
+    catalogue_sub: 'A full range of cooperative financial services — from shares and savings to loans, payments and financial counselling.',
+    catalogue_left: [
+      'Members’ actions (shares)',
+      'Member savings and deposits',
+      'Main loans to members',
+      'New members’ loans',
+      'School fees loans to members',
+      'Special savings (loans within savings)',
+      'Members’ overdraft / salary account',
+      'Consortium loans to sponsor SOCADEL subcontractors',
+    ],
+    catalogue_right: [
+      'Involvement of members as shareholders of their company',
+      'Payment of members’ yearly dividends after the AGM',
+      'Retirement — NSIF / MURCAS services',
+      'Member transactions via the Eneo visa card',
+      'Telephone payment conveniences for members',
+      'Clearing of members’ cheques',
+      'Financial counselling',
+      'SMS service for financial information',
+      'Account online consultation',
+      'Members’ blocked savings and advance dividend payments',
+    ],
+
+    // ── Upfront dividend payment package (from the advert) ───────────────
+    dividend_eyebrow: 'Upfront dividend payment package',
+    dividend_title: 'Take a long-term loan',
+    dividend_pitch: 'With any upfront anticipated 100% principal repayment, benefit from a 100% loan interest waiver for the entire outstanding period.',
+    dividend_note: 'NB: With withholding tax from 50 million FCFA.',
+    dividend_rates: [
+      { range: '5 000 000 – 50 000 000', rate: '3.5%' },
+      { range: '50 000 001 – 100 000 000', rate: '4.0%' },
+      { range: '100 000 001 – 150 000 000', rate: '4.3%' },
+      { range: '150 000 001 – 200 000 000', rate: '4.8%' },
+      { range: '200 000 001 – 250 000 000', rate: '5.0%' },
+      { range: '250 000 001 – 300 000 000', rate: '5.3%' },
+      { range: '300 000 001 – 350 000 000', rate: '5.5%' },
+      { range: '350 000 001 – 400 000 000', rate: '5.8%' },
+      { range: '450 000 001 – 500 000 000', rate: '6.0%' },
+    ],
+
     // Services section
     services_eyebrow: 'What we offer',
     services_title: 'Products and services for every cooperator',
@@ -88,14 +139,90 @@ export const DEFAULT_CONTENT = {
   },
   team: {
     president: { name: '', role: 'President, Board of Directors', photo: '' },
-    gm: { name: '', role: 'General Manager', photo: '' },
+    gm: { name: 'Kemonde David', role: 'General Manager', phone: '677 65 22 18', email: 'd.kemonde@gmail.com', photo: '/team/david-kemonde.jpg' },
+    leadership: [
+      { name: 'Tanga Eric', role: 'Chief of Lending & Recovery', phone: '680 36 53 75', email: 'tangatanyi@gmail.com', photo: '/team/eric-tanyi.jpg' },
+      { name: 'Akongoh Valery', role: 'Chief Internal Controller', phone: '676 10 22 91', email: 'akongohvalery@yahoo.com', photo: '/team/akongoh-valery.jpg' },
+    ],
     managers: [
-      { name: '', role: 'Branch Manager', branch: 'Limbe (HQ)', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Bamenda', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Douala', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Bafoussam', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Ebolowa', photo: '' },
-      { name: '', role: 'Branch Manager', branch: 'Yaoundé', photo: '' },
+      { name: 'Zipoh Ophilia', role: 'Branch Manager', branch: 'Limbe (HQ)', phone: '656 92 32 46', email: 'zipohophil@gmail.com', photo: '/team/zipoh-ophilia.jpg' },
+      { name: 'Awah Genevieve', role: 'Branch Manager', branch: 'Bamenda', phone: '693 37 18 28', email: 'mahbih@gmail.com', photo: '/team/awah-genevieve.jpg' },
+      { name: 'Etone Samuel', role: 'Branch Manager', branch: 'Douala', phone: '677 96 00 72', email: 'siretone2002@yahoo.com', photo: '/team/etone-samuel.jpg' },
+      { name: 'Mbah Victoria', role: 'Branch Manager', branch: 'Bafoussam', phone: '677 83 08 94', email: 'Victoriambah931@gmail.com', photo: '/team/mbah-victoria.jpg' },
+      { name: 'Elate Roland', role: 'Branch Manager', branch: 'Garoua', phone: '676 78 53 22', email: 'rolandelate@gmail.com', photo: '/team/elate-roland.jpg' },
+      { name: 'Enow Franklin', role: 'Deputy Director & Branch Manager', branch: 'Yaound\u00e9', phone: '675 93 88 24', email: 'enow2frank@yahoo.com', photo: '/team/enow-franklin.jpg' },
+    ],
+  },
+  // Board of Directors. Placeholder members for now — names, roles and photos
+  // are admin-editable and served from the API, exactly like the team section.
+  // The chair sits at the top; the other directors follow in a grid.
+  board: {
+    chair: { name: '', role: 'Chairperson, Board of Directors', photo: '' },
+    directors: [
+      { name: '', role: 'Vice-Chairperson', photo: '' },
+      { name: '', role: 'Secretary', photo: '' },
+      { name: '', role: 'Treasurer', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+    ],
+  },
+  // Partners, regulators and affiliations, grouped as in the cooperative's own
+  // partners document. `logo` is a file under client/public/partners/.
+  // Admin-editable: names and groupings can be changed without code.
+  partners: {
+    intro: 'SOWOCCUL works alongside employers, regulators and international cooperative bodies. Our accounts are independently certified and our operations are supervised by the regional banking authority.',
+    groups: [
+      {
+        title: 'Main partners',
+        note: 'Employers and institutions we serve and work with.',
+        items: [
+          { name: 'SOCADEL', logo: 'socadel.jpeg' },
+          { name: 'ENEO', logo: 'eneo.png' },
+          { name: 'Dibamba Power (DPDC)', logo: 'dibamba.png' },
+          { name: 'Kribi Power (KPDC)', logo: 'kribi.png' },
+          { name: 'MTN', logo: 'mtn.jpeg' },
+          { name: 'MURCAS', logo: 'murcas.png' },
+          { name: 'Energy of Cameroon', logo: 'energy2.png' },
+        ],
+      },
+      {
+        title: 'Governance, authority and control bodies',
+        note: 'Our supervisory and regulatory framework.',
+        items: [
+          { name: 'COBAC', logo: 'cobac.png' },
+          { name: 'BEAC', logo: 'beac.png' },
+          { name: 'CamCCUL', logo: 'camccul.png' },
+          { name: 'Ministry of Finance (MINFI)', logo: 'minfi.jpeg' },
+        ],
+      },
+      {
+        title: 'International affiliations',
+        note: 'Members of the worldwide credit union movement.',
+        items: [
+          { name: 'ACCOSCA', logo: 'accosca.png' },
+          { name: 'WOCCU', logo: 'woccu.jpeg' },
+          { name: 'Desjardins Canada', logo: 'desjardins.png' },
+        ],
+      },
+      {
+        title: 'Certification of accounts',
+        note: 'Our accounts are independently audited and certified.',
+        items: [
+          { name: 'Audit partner', logo: 'audit1.jpeg' },
+          { name: 'Audit partner', logo: 'audit2.png' },
+        ],
+      },
+      {
+        title: 'Corporate body of SOCADEL subcontractors',
+        note: '',
+        items: [
+          { name: 'HHC', logo: 'hhc.jpeg' },
+          { name: 'Lawbrothers', logo: '' },
+          { name: 'Household Cleaning Enterprise', logo: '' },
+          { name: 'MGS Sarl', logo: '' },
+        ],
+      },
     ],
   },
   careers: {

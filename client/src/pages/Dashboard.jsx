@@ -48,6 +48,12 @@ export default function Dashboard() {
       <h1 className="page-title">{t('dash_title')}, {user.full_name.split(' ')[0]}</h1>
       <p className="page-intro">{t('dash_intro')}</p>
 
+      {user.role === 'member' && user.review_status === 'pending_review' && (
+        <div className="alert" style={{ background: 'var(--amber-light)', color: 'var(--amber)', border: '1px solid rgba(183,121,31,0.25)' }}>
+          <strong>{t('dash_pending_title')}</strong> {t('dash_pending_text')}
+        </div>
+      )}
+
       {user.twofa_setup_required && !user.twofa_setup_forced && !twofaPromptDismissed && (
         <div className="twofa-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="twofaModalTitle">
           <div className="twofa-modal">

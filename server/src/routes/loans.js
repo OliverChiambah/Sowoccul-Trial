@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db/index.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, blockPendingMember } from '../middleware/auth.js';
 import { ah } from '../lib/async-handler.js';
 import * as money from '../lib/money.js';
 import { postToAccount } from '../lib/post-money.js';
@@ -20,7 +20,7 @@ function makeReference() {
  * Body: the full form payload from the multi-step form.
  * We store the whole payload as JSON and pull out amount/purpose for listing.
  */
-loansRouter.post('/', ah(async (req, res) => {
+loansRouter.post('/', blockPendingMember, ah(async (req, res) => {
   const payload = req.body || {};
 
   // loan_amount_figures may arrive as "1 500 000" or "1500000".

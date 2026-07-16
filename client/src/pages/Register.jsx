@@ -64,10 +64,11 @@ export default function Register() {
   async function onSubmit(e) {
     e.preventDefault();
     setError('');
-    // Client-side checks mirror the server so the message is instant.
+    // Client-side checks mirror the server so the message is instant. Since the
+    // form is open to the public, only the essentials are mandatory: name (via
+    // the required fields below), branch, phone, email and password.
     if (!form.branch) { setError(t('reg_err_branch')); return; }
-    if (!form.photo_filename || !form.id_card_filename) { setError(t('reg_err_docs')); return; }
-    if (!form.signature || !form.signature.trim()) { setError(t('reg_err_sign')); return; }
+    if (!form.phone || !form.phone.trim()) { setError(t('reg_err_phone')); return; }
     if ((form.password || '').length < 8) { setError(t('pw_short')); return; }
     if (form.password !== form.confirm_password) { setError(t('pw_mismatch')); return; }
     setBusy(true);
@@ -233,18 +234,18 @@ export default function Register() {
           <p className="muted" style={{ fontSize: 12.5, marginTop: -6, marginBottom: 14 }}>{t('reg_docs_hint')}</p>
           <div className="grid2">
             <div className="field">
-              <label>{t('reg_photo')}<span className="req">*</span></label>
+              <label>{t('reg_photo')}</label>
               <input type="file" accept="image/*" onChange={onFile('photo_filename')} />
               {form.photo_filename && <span className="hint">✓ {form.photo_filename}</span>}
             </div>
             <div className="field">
-              <label>{t('reg_idcard')}<span className="req">*</span></label>
+              <label>{t('reg_idcard')}</label>
               <input type="file" accept="image/*,application/pdf" onChange={onFile('id_card_filename')} />
               {form.id_card_filename && <span className="hint">✓ {form.id_card_filename}</span>}
             </div>
           </div>
           <div className="field full">
-            <label>{t('reg_signature')}<span className="req">*</span></label>
+            <label>{t('reg_signature')}</label>
             <input value={form.signature || ''} onChange={set('signature')} placeholder={t('reg_signature_ph')} />
             {form.signature && (
               <div style={{ marginTop: 10, padding: '14px 18px', border: '1px dashed var(--line)', borderRadius: 10, background: 'var(--paper-50)' }}>
