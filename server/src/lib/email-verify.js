@@ -126,3 +126,14 @@ export async function isVerified(userId) {
   const u = await db.one('SELECT email_verified FROM users WHERE id = $1', [userId]);
   return !!(u && u.email_verified);
 }
+
+/**
+ * Manually mark a user's email as verified (admin support action). Sets the
+ * user flag and consumes any live verification row so nothing dangles. Use only
+ * when an administrator has confirmed the person's identity another way and
+ * email delivery isn't an option.
+ */
+export async function markVerifiedByAdmin(userId) {
+  await db.run('UPDATE email_verifications SET consumed_at = now() WHERE user_id = $1 AND consumed_at IS NULL', [userId]);
+  await db.run('UPDATE users SET email_verified = 1 WHERE id = $1', [userId]);
+}

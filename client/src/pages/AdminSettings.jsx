@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import { useLang } from '../lib/i18n.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { money, digitsOnly } from '../lib/format.js';
 
 /**
@@ -10,6 +11,8 @@ import { money, digitsOnly } from '../lib/format.js';
  */
 export default function AdminSettings() {
   const { t } = useLang();
+  const { user } = useAuth();
+  const isGM = user && user.role === 'manager';
   const [value, setValue] = useState('');
   const [current, setCurrent] = useState(null);
   const [require2fa, setRequire2fa] = useState('off');
@@ -79,17 +82,23 @@ export default function AdminSettings() {
 
         {msg && <div className={'alert ' + (msg.ok ? 'alert-ok' : 'alert-error')}>{msg.text}</div>}
 
-        <div className="field">
-          <label>{t('settings_threshold_label')}</label>
-          <div className="amount-wrap">
-            <input value={value} onChange={(e) => setValue(digitsOnly(e.target.value))} inputMode="numeric" />
-            <span className="amount-suffix">FCFA</span>
-          </div>
-        </div>
-        <div className="btn-row">
-          <button className="btn btn-primary" onClick={save} disabled={busy}>{busy ? t('saving') : t('save')}</button>
-        </div>
-        <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>{t('settings_threshold_zero_note')}</p>
+        {isGM ? (
+          <>
+            <div className="field">
+              <label>{t('settings_threshold_label')}</label>
+              <div className="amount-wrap">
+                <input value={value} onChange={(e) => setValue(digitsOnly(e.target.value))} inputMode="numeric" />
+                <span className="amount-suffix">FCFA</span>
+              </div>
+            </div>
+            <div className="btn-row">
+              <button className="btn btn-primary" onClick={save} disabled={busy}>{busy ? t('saving') : t('save')}</button>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>{t('settings_threshold_zero_note')}</p>
+          </>
+        ) : (
+          <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>{t('settings_threshold_gm_only')}</p>
+        )}
       </div>
 
       <div className="card settings-2fa" style={{ maxWidth: 620 }}>

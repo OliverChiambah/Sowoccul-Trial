@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import { useLang } from '../lib/i18n.jsx';
+import { formatDateTime } from '../lib/format.js';
 
 // Friendly labels for the machine action keys.
 const ACTION_LABELS = {
@@ -12,6 +13,8 @@ const ACTION_LABELS = {
   'loan.repayment': { en: 'Loan repayment', fr: 'Remboursement' },
   'member.create': { en: 'Member created', fr: 'Membre créé' },
   'member.reviewed': { en: 'Member reviewed', fr: 'Membre vérifié' },
+  'member.admitted': { en: 'Member admitted', fr: 'Membre admis' },
+  'member.info_requested': { en: 'More info requested', fr: 'Infos complémentaires demandées' },
   'member.reassign': { en: 'Member reassigned', fr: 'Membre réaffecté' },
   'staff.create': { en: 'Staff created', fr: 'Personnel créé' },
   'staff.edit_rights': { en: 'Edit rights changed', fr: 'Droits modifiés' },
@@ -28,6 +31,14 @@ const ACTION_LABELS = {
   'twofa.recovery_used': { en: '2FA recovery code used', fr: 'Code de secours 2FA utilisé' },
   'twofa.recovery_regenerated': { en: '2FA recovery codes regenerated', fr: 'Codes de secours 2FA régénérés' },
   'staff.remove': { en: 'Staff removed', fr: 'Personnel retiré' },
+  'user.deletion_requested': { en: 'Deletion requested', fr: 'Suppression demandée' },
+  'user.deletion_approved': { en: 'Deletion approved', fr: 'Suppression approuvée' },
+  'user.deletion_rejected': { en: 'Deletion declined', fr: 'Suppression refusée' },
+  'user.deletion_cancelled': { en: 'Deletion withdrawn', fr: 'Suppression retirée' },
+  'user.force_password_reset': { en: 'Password reset required', fr: 'Réinit. mot de passe requise' },
+  'user.verification_resent': { en: 'Verification re-sent', fr: 'Vérification renvoyée' },
+  'user.email_verified_by_admin': { en: 'Email verified by admin', fr: 'E-mail vérifié par l’admin' },
+  'application.status': { en: 'Application decision', fr: 'Décision de candidature' },
   'member.self_update': { en: 'Self-updated contact', fr: 'Coordonnées mises à jour' },
   'correction.request': { en: 'Correction requested', fr: 'Correction demandée' },
   'correction.apply': { en: 'Correction applied', fr: 'Correction appliquée' },
@@ -42,6 +53,10 @@ export default function AuditLog() {
   const { t, lang } = useLang();
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [name, setName] = useState('');
+  const [nameQuery, setNameQuery] = useState('');   // the applied (debounced) name
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [err, setErr] = useState(null);
   const [ledger, setLedger] = useState(null);   // ledger health; null = not loaded/allowed
 
@@ -54,18 +69,32 @@ export default function AuditLog() {
     return () => { active = false; };
   }, []);
 
+  // Debounce the name box so we don't query on every keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setNameQuery(name.trim()), 350);
+    return () => clearTimeout(id);
+  }, [name]);
+
   async function load() {
     setErr(null);
     try {
-      const q = filter === 'all' ? '' : `?action=${encodeURIComponent(filter)}`;
-      const r = await api(`/admin/audit${q}`);
+      const params = new URLSearchParams();
+      if (filter !== 'all') params.set('action', filter);
+      if (nameQuery) params.set('name', nameQuery);
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      const qs = params.toString();
+      const r = await api(`/admin/audit${qs ? `?${qs}` : ''}`);
       setData(r);
     } catch (e) { setErr(e.message); }
   }
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter, nameQuery, from, to]);
+
+  const clearFilters = () => { setFilter('all'); setName(''); setNameQuery(''); setFrom(''); setTo(''); };
+  const hasFilters = filter !== 'all' || nameQuery || from || to;
 
   const actionLabel = (a) => (ACTION_LABELS[a] ? ACTION_LABELS[a][lang] || ACTION_LABELS[a].en : a);
-  const when = (s) => { try { return new Date(s.replace(' ', 'T') + 'Z').toLocaleString(); } catch { return s; } };
+  const when = (s) => formatDateTime(s, lang);
 
   if (err) return (<><h1 className="page-title">{t('audit_title')}</h1><div className="alert alert-error">{err}</div></>);
   if (!data) return <div className="loading">…</div>;
@@ -83,6 +112,24 @@ export default function AuditLog() {
             : t('ledger_unhealthy').replace('{n}', (ledger.reconciliation?.mismatches?.length || 0))}
         </div>
       )}
+
+      <div className="audit-filters">
+        <div className="field" style={{ margin: 0, flex: '1 1 220px' }}>
+          <label>{t('audit_filter_name')}</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('audit_filter_name_ph')} />
+        </div>
+        <div className="field" style={{ margin: 0 }}>
+          <label>{t('audit_filter_from')}</label>
+          <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
+        </div>
+        <div className="field" style={{ margin: 0 }}>
+          <label>{t('audit_filter_to')}</label>
+          <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+        </div>
+        {hasFilters && (
+          <button className="btn btn-ghost" style={{ alignSelf: 'flex-end' }} onClick={clearFilters}>{t('audit_filter_clear')}</button>
+        )}
+      </div>
 
       <div className="stepper" style={{ marginBottom: 18 }}>
         <button className={'step-chip' + (filter === 'all' ? ' active' : '')} onClick={() => setFilter('all')}>{t('audit_all')}</button>

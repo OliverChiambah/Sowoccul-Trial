@@ -44,11 +44,20 @@ export async function recordFor(actor, action, opts = {}) {
 }
 
 /** Read the log, newest first, with optional filters and a limit. */
-export async function listAudit({ action, actorId, limit = 200 } = {}) {
+export async function listAudit({ action, actorId, name, from, to, limit = 200 } = {}) {
   const conds = [];
   const params = [];
   if (action) { params.push(action); conds.push(`action = $${params.length}`); }
   if (actorId) { params.push(actorId); conds.push(`actor_id = $${params.length}`); }
+  // Name search matches the actor's name OR anyone named in the summary, case-insensitively.
+  if (name) {
+    params.push(`%${String(name).toLowerCase()}%`);
+    conds.push(`(LOWER(actor_name) LIKE $${params.length} OR LOWER(summary) LIKE $${params.length})`);
+  }
+  // Date range on created_at. `from` is inclusive from the start of that day;
+  // `to` is inclusive through the end of that day (dates are 'YYYY-MM-DD').
+  if (from) { params.push(from); conds.push(`created_at >= $${params.length}::date`); }
+  if (to) { params.push(to); conds.push(`created_at < ($${params.length}::date + INTERVAL '1 day')`); }
   const where = conds.length ? ' WHERE ' + conds.join(' AND ') : '';
   const cap = Math.min(Math.max(parseInt(limit, 10) || 200, 1), 1000);
   return db.all(`SELECT * FROM audit_log${where} ORDER BY id DESC LIMIT ${cap}`, params);

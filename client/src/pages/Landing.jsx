@@ -139,7 +139,72 @@ function SceneSecure() {
   );
 }
 
-const HERO_SCENES = [SceneDashboard, SceneSavings, SceneCard, SceneSecure];
+/**
+ * Mobile-money deposit partner scenes. These are original graphics built in the
+ * partners' brand colours to communicate the deposit partnership — they are not
+ * reproductions of MTN's or Orange's trademarked logos. The USSD code and the
+ * head-office MoMo number reflect how a member actually tops up their account.
+ */
+function SceneMomo() {
+  return (
+    <svg viewBox="0 0 520 440" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto' }} role="img" aria-label="Deposit to SOWOCCUL with MTN Mobile Money">
+      <defs>
+        <linearGradient id="momoBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFFDF3" /><stop offset="1" stopColor="#FFF7DA" /></linearGradient>
+      </defs>
+      <rect x="30" y="40" width="460" height="360" rx="24" fill="url(#momoBg)" stroke="#F1E3A8" />
+      {/* Brand disc in MTN yellow with a phone glyph */}
+      <circle cx="260" cy="150" r="66" fill="#FFCB05" />
+      <circle cx="260" cy="150" r="66" fill="none" stroke="#122A54" strokeOpacity="0.08" strokeWidth="2" />
+      <rect x="238" y="116" width="44" height="68" rx="8" fill="#12233A" />
+      <rect x="244" y="124" width="32" height="44" rx="3" fill="#FFCB05" />
+      <circle cx="260" cy="176" r="4" fill="#FFCB05" />
+      <path d="M252 146 l6 6 l12 -14" fill="none" stroke="#12233A" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Partner lockup */}
+      <text x="260" y="252" fill="#122A54" fontFamily="Fraunces" fontSize="24" fontWeight="700" textAnchor="middle">MTN MoMo</text>
+      <text x="260" y="278" fill="#5A6862" fontFamily="IBM Plex Sans" fontSize="13.5" fontWeight="600" textAnchor="middle">Mobile Money deposits to SOWOCCUL</text>
+      {/* USSD + number pills */}
+      <g fontFamily="IBM Plex Sans" textAnchor="middle">
+        <rect x="150" y="300" width="100" height="46" rx="12" fill="#122A54" />
+        <text x="200" y="322" fill="#FFCB05" fontSize="12" fontWeight="600">Dial</text>
+        <text x="200" y="338" fill="#fff" fontSize="17" fontWeight="700" fontFamily="IBM Plex Mono">*126#</text>
+        <rect x="262" y="300" width="150" height="46" rx="12" fill="#fff" stroke="#E6ECE9" />
+        <text x="337" y="320" fill="#5A6862" fontSize="10.5" fontWeight="600">Head office MoMo</text>
+        <text x="337" y="338" fill="#122A54" fontSize="16" fontWeight="700" fontFamily="IBM Plex Mono">681 629 380</text>
+      </g>
+      <text x="260" y="384" fill="#8A968F" fontFamily="IBM Plex Sans" fontSize="11" textAnchor="middle">Official deposit partner</text>
+    </svg>
+  );
+}
+
+function SceneOrange() {
+  return (
+    <svg viewBox="0 0 520 440" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto' }} role="img" aria-label="Deposit to SOWOCCUL with Orange Money">
+      <defs>
+        <linearGradient id="omBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFFBF7" /><stop offset="1" stopColor="#FFEEDD" /></linearGradient>
+      </defs>
+      <rect x="30" y="40" width="460" height="360" rx="24" fill="url(#omBg)" stroke="#FAD8B8" />
+      {/* Brand disc in Orange orange with a phone glyph */}
+      <circle cx="260" cy="150" r="66" fill="#FF7900" />
+      <circle cx="260" cy="150" r="66" fill="none" stroke="#122A54" strokeOpacity="0.08" strokeWidth="2" />
+      <rect x="238" y="116" width="44" height="68" rx="8" fill="#12233A" />
+      <rect x="244" y="124" width="32" height="44" rx="3" fill="#FF7900" />
+      <circle cx="260" cy="176" r="4" fill="#FF7900" />
+      <path d="M252 146 l6 6 l12 -14" fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Partner lockup */}
+      <text x="260" y="252" fill="#122A54" fontFamily="Fraunces" fontSize="24" fontWeight="700" textAnchor="middle">Orange Money</text>
+      <text x="260" y="278" fill="#5A6862" fontFamily="IBM Plex Sans" fontSize="13.5" fontWeight="600" textAnchor="middle">Mobile Money deposits to SOWOCCUL</text>
+      {/* USSD pill */}
+      <g fontFamily="IBM Plex Sans" textAnchor="middle">
+        <rect x="185" y="300" width="150" height="46" rx="12" fill="#122A54" />
+        <text x="260" y="322" fill="#FF7900" fontSize="12" fontWeight="600">Dial</text>
+        <text x="260" y="338" fill="#fff" fontSize="17" fontWeight="700" fontFamily="IBM Plex Mono">#150#</text>
+      </g>
+      <text x="260" y="384" fill="#8A968F" fontFamily="IBM Plex Sans" fontSize="11" textAnchor="middle">Official deposit partner</text>
+    </svg>
+  );
+}
+
+const HERO_SCENES = [SceneDashboard, SceneSavings, SceneCard, SceneSecure, SceneMomo, SceneOrange];
 
 /**
  * Rotating hero: fades between several banking/savings scenes on a timer.
@@ -193,7 +258,7 @@ function HeroCarousel({ images }) {
 const DEFAULT_HERO_TRUST = [
   { num: '30 yrs', lbl: 'Serving cooperators since 1995' },
   { num: 'Licensed MFI', lbl: 'COBAC · MINFI · CEMAC · NCC' },
-  { num: '6', lbl: 'Branches · HQ in Limbe' },
+  { num: '7', lbl: 'Offices · Head Office + 6 branches' },
 ];
 const DEFAULT_SERVICES = [
   { title: 'Savings accounts', body: 'Grow your money safely with regular savings and share capital. Deductions at source make saving effortless, month after month.' },
@@ -211,7 +276,7 @@ const DEFAULT_WHY = [
 ];
 const DEFAULT_STATS = [
   { n: '1995', l: 'Serving cooperators since' },
-  { n: '6', l: 'Branches · HQ in Limbe' },
+  { n: '7', l: 'Offices · Head Office + 6 branches' },
   { n: 'MFI', l: 'COBAC · MINFI · CEMAC · NCC' },
   { n: 'EN / FR', l: 'Bilingual service' },
 ];
@@ -240,6 +305,20 @@ export default function Landing() {
     return () => { active = false; };
   }, []);
 
+  // Partner logos for the strip. We show only the main partners here (the full
+  // list, including regulators and affiliations, lives on /partners).
+  const [partnerLogos, setPartnerLogos] = useState([]);
+  useEffect(() => {
+    let active = true;
+    api('/content/partners').then((r) => {
+      if (!active) return;
+      const groups = r.data?.groups || [];
+      const main = groups[0]?.items || [];
+      setPartnerLogos(main.filter((p) => p.logo));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
   // When arriving from /team or /careers via a link like /#about, scroll there.
   useEffect(() => {
     const id = window.location.hash.replace('#', '');
@@ -257,6 +336,8 @@ export default function Landing() {
           <a onClick={() => scroll('about')}>About</a>
           <a onClick={() => scroll('services')}>Services</a>
           <a onClick={() => nav('/team')}>Team</a>
+          <a onClick={() => nav('/board')}>Board</a>
+          <a onClick={() => nav('/partners')}>Partners</a>
           <a onClick={() => nav('/careers')}>Careers</a>
           <a onClick={() => scroll('contact')}>Contact</a>
         </div>
@@ -296,6 +377,62 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Mission — from the cooperative's own advert */}
+      <section className="mission-band" id="mission"><div className="mission-inner">
+        <div className="sec-eyebrow" style={{ color: 'var(--green-200)' }}>{c?.mission_eyebrow || 'Our mission'}</div>
+        <h2 className="mission-title">{c?.mission_title || 'Improving our members’ lives, together'}</h2>
+        <p className="mission-body">{c?.mission_body}</p>
+        <p className="mission-agm">{c?.mission_agm}</p>
+        <div className="mission-tag">{c?.mission_tagline}</div>
+      </div></section>
+
+      {/* Full products & services catalogue */}
+      <section className="section" id="catalogue"><div className="sec-head">
+        <div className="sec-eyebrow">{c?.catalogue_eyebrow || 'Products and services'}</div>
+        <h2 className="sec-title">{c?.catalogue_title || 'Everything we offer our members'}</h2>
+        <p className="sec-sub">{c?.catalogue_sub}</p>
+      </div>
+        <div className="catalogue-grid">
+          <ul className="catalogue-list">
+            {(c?.catalogue_left || []).map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+          <ul className="catalogue-list">
+            {(c?.catalogue_right || []).map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+        </div>
+      </section>
+
+      {/* Upfront dividend payment package */}
+      {(c?.dividend_rates || []).length > 0 && (
+        <section className="section dividend-sec" id="dividend">
+          <div className="dividend-inner">
+            <div className="dividend-copy">
+              <div className="sec-eyebrow">{c?.dividend_eyebrow || 'Upfront dividend payment package'}</div>
+              <h2 className="sec-title" style={{ textAlign: 'left' }}>{c?.dividend_title || 'Take a long-term loan'}</h2>
+              <p className="dividend-pitch">{c?.dividend_pitch}</p>
+              <div className="dividend-motto">
+                <span>{c?.hero_title_1 || 'Save regularly.'}</span>
+                <span>{c?.hero_title_2 || 'Borrow wisely.'}</span>
+                <span>{c?.hero_title_3 || 'Repay promptly.'}</span>
+              </div>
+              <p className="dividend-note">{c?.dividend_note}</p>
+            </div>
+            <div className="dividend-table-wrap">
+              <table className="dividend-table">
+                <thead>
+                  <tr><th>{t('dividend_amount')}</th><th>{t('dividend_rate')}</th></tr>
+                </thead>
+                <tbody>
+                  {(c?.dividend_rates || []).map((r, i) => (
+                    <tr key={i}><td>{r.range}</td><td className="dividend-pct">{r.rate}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="about" id="about"><div className="about-inner">
         <div>
           <svg viewBox="0 0 440 300" style={{ width: '100%', height: 'auto' }} role="img" aria-label="Members supported by the cooperative">
@@ -329,6 +466,21 @@ export default function Landing() {
         ))}
       </div></section>
 
+      {/* Partner logo strip — links to the full partners page */}
+      {partnerLogos.length > 0 && (
+        <section className="partner-strip" id="partners">
+          <div className="partner-strip-inner">
+            <div className="partner-strip-head">{t('partners_strip_title')}</div>
+            <div className="partner-strip-logos">
+              {partnerLogos.map((p, i) => (
+                <img key={i} src={`/partners/${p.logo}`} alt={p.name} title={p.name} loading="lazy" />
+              ))}
+            </div>
+            <button className="btn btn-ghost" onClick={() => nav('/partners')}>{t('partners_strip_cta')}</button>
+          </div>
+        </section>
+      )}
+
       <section className="cta-band" id="contact"><div className="cta-inner">
         <div><h2>{c?.cta_title || 'Ready to save and borrow with confidence?'}</h2><p>{c?.cta_text || 'Join the cooperators who trust SOWOCCUL with their savings and their goals. Choose the branch closest to you and open an account in minutes.'}</p></div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -343,8 +495,16 @@ export default function Landing() {
           <p className="desc">SOWOCCUL — Deductions at Source plus Express Savings. A licensed microfinance institution (COBAC · MINFI · CEMAC · NCC) serving cooperators since 1995. Open to the public. Save regularly, borrow wisely, repay promptly.</p>
         </div>
         <div><h5>Products &amp; services</h5><a onClick={() => scroll('services')}>Savings accounts</a><a onClick={() => scroll('services')}>Express Savings</a><a onClick={() => scroll('services')}>Loans</a><a onClick={() => scroll('services')}>Transfers</a></div>
-        <div><h5>Cooperative</h5><a onClick={() => scroll('about')}>About us</a><a onClick={() => nav('/team')}>Our team</a><a onClick={() => nav('/careers')}>Careers</a><a onClick={() => scroll('contact')}>Membership</a></div>
-        <div><h5>Branches</h5><a>Limbe (HQ)</a><a>Bamenda · Douala</a><a>Bafoussam · Yaoundé</a><a>Ebolowa</a></div>
+        <div><h5>Cooperative</h5><a onClick={() => scroll('about')}>About us</a><a onClick={() => nav('/team')}>Our team</a><a onClick={() => nav('/board')}>Board of Directors</a><a onClick={() => nav('/partners')}>Our partners</a><a onClick={() => nav('/careers')}>Careers</a><a onClick={() => scroll('contact')}>Membership</a></div>
+        <div><h5>Branches</h5>
+          <a href="/branch/Head%20Office" target="_blank" rel="noopener noreferrer">Head Office</a>
+          <a href="/branch/Limbe" target="_blank" rel="noopener noreferrer">Limbe</a>
+          <a href="/branch/Douala" target="_blank" rel="noopener noreferrer">Douala</a>
+          <a href="/branch/Bamenda" target="_blank" rel="noopener noreferrer">Bamenda</a>
+          <a href="/branch/Yaounde" target="_blank" rel="noopener noreferrer">Yaoundé</a>
+          <a href="/branch/Garoua" target="_blank" rel="noopener noreferrer">Garoua</a>
+          <a href="/branch/Bafoussam" target="_blank" rel="noopener noreferrer">Bafoussam</a>
+        </div>
       </div>
         <div className="footer-inner" style={{ paddingTop: 0 }}><div className="footer-bottom" style={{ gridColumn: '1/-1', width: '100%' }}>
           <span>© {new Date().getFullYear()} Sonel Workers Credit Union (SOWOCCUL). All rights reserved.</span>
