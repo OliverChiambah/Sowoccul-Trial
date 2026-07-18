@@ -55,8 +55,13 @@ export default function AdminStaff() {
 
   async function remove(person) {
     setMsg(null);
-    try { await api(`/admin/staff/${person.id}`, { method: 'DELETE' }); await load(); }
-    catch (e) { setMsg({ ok: false, text: e.message }); }
+    if (!window.confirm(t('staff_remove_request_confirm').replace('{name}', person.full_name))) return;
+    const reason = window.prompt(t('staff_remove_reason')) || '';
+    try {
+      await api(`/admin/staff/${person.id}`, { method: 'DELETE', body: { reason } });
+      await load();
+      setMsg({ ok: true, text: t('staff_remove_requested') });
+    } catch (e) { setMsg({ ok: false, text: e.message }); }
   }
 
   async function reset2fa(person) {

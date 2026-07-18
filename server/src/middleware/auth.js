@@ -42,7 +42,7 @@ export async function requireAuth(req, res, next) {
     // token's tv is behind the database, every token issued before the bump is
     // now invalid. One indexed primary-key lookup per request.
     const row = await db.one(
-      'SELECT token_version, role, branch, can_edit, title, must_change_password FROM users WHERE id = $1',
+      'SELECT token_version, role, branch, can_edit, title, must_change_password, review_status FROM users WHERE id = $1',
       [payload.sub]
     );
     if (!row) {
@@ -61,6 +61,7 @@ export async function requireAuth(req, res, next) {
       title: row.title || null,
       can_edit: row.can_edit ? 1 : 0,
       must_change_password: row.must_change_password ? 1 : 0,
+      review_status: row.review_status || 'active',
     };
     next();
   } catch (e) {
@@ -157,6 +158,22 @@ export function blockFinancialAdmin(req, res, next) {
     return res.status(403).json({
       error: 'The system administrator role is for technical administration only and cannot access member financial data or transactions.',
       code: 'admin_not_financial',
+    });
+  }
+  next();
+}
+
+/**
+ * Express guard: blocks a member who is still awaiting branch-manager admission
+ * (review_status 'pending_review') from money-moving actions. They can sign in
+ * and look around, but can't transact until a manager admits them. Non-members
+ * and admitted members pass through untouched.
+ */
+export function blockPendingMember(req, res, next) {
+  if (req.user && req.user.role === 'member' && req.user.review_status === 'pending_review') {
+    return res.status(403).json({
+      error: 'Your account is still being reviewed by your branch. You will be able to use this once a manager admits you.',
+      code: 'member_pending_review',
     });
   }
   next();

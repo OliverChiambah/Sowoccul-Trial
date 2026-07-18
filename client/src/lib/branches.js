@@ -1,3 +1,4 @@
-// The six SONEL branches. Limbe is the headquarters.
-export const BRANCHES = ['Bamenda', 'Limbe', 'Douala', 'Bafoussam', 'Ebolowa', 'Yaounde'];
-export const HEADQUARTERS = 'Limbe';
+// The seven SOWOCCUL offices, in order of creation and institutional
+// importance. The Head Office is a distinct entity from the Limbe branch.
+export const BRANCHES = ['Head Office', 'Limbe', 'Douala', 'Bamenda', 'Yaounde', 'Garoua', 'Bafoussam'];
+export const HEADQUARTERS = 'Head Office';

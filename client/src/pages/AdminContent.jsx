@@ -16,6 +16,7 @@ export default function AdminContent() {
     ['landing', t('content_landing')],
     ['pages', t('content_auth_pages')],
     ['team', t('content_team')],
+    ['board', t('content_board')],
     ['careers', t('content_careers')],
     ['contact', t('content_contact')],
     ['branches', t('content_branches')],
@@ -36,6 +37,7 @@ export default function AdminContent() {
       {tab === 'landing' && <LandingEditor />}
       {tab === 'pages' && <AuthPagesEditor />}
       {tab === 'team' && <TeamEditor />}
+      {tab === 'board' && <BoardEditor />}
       {tab === 'careers' && <CareersEditor />}
       {tab === 'contact' && <ContactEditor />}
       {tab === 'branches' && <BranchesEditor />}
@@ -282,6 +284,50 @@ function TeamEditor() {
             <input value={m.name || ''} onChange={(e) => setMgr(i, { name: e.target.value })} placeholder={t('content_name_ph')} />
             <div style={{ marginTop: 8 }}><PhotoField value={m.photo || ''} onChange={(id) => setMgr(i, { photo: id })} /></div></div>
         ))}
+      </div>
+      <SaveBar msg={msg} busy={busy} onSave={() => save(data)} />
+    </div>
+  );
+}
+
+/* ── Board of Directors editor ───────────────────────────────────────────── */
+function BoardEditor() {
+  const { t } = useLang();
+  const { data, setData, save, msg, busy } = useSection('board');
+  if (!data) return <div className="loading">…</div>;
+
+  const setChair = (patch) => setData({ ...data, chair: { ...data.chair, ...patch } });
+  const setDir = (i, patch) => setData({ ...data, directors: (data.directors || []).map((d, j) => j === i ? { ...d, ...patch } : d) });
+  const addDir = () => setData({ ...data, directors: [...(data.directors || []), { name: '', role: 'Director', photo: '' }] });
+  const removeDir = (i) => setData({ ...data, directors: (data.directors || []).filter((_, j) => j !== i) });
+
+  return (
+    <div className="card">
+      <div className="card-legend">{t('content_board')}</div>
+      <p className="muted" style={{ fontSize: 12.5, marginTop: -6, marginBottom: 14 }}>{t('content_board_hint')}</p>
+
+      <div className="field">
+        <label>{t('content_board_chair')}</label>
+        <input value={data.chair?.role || ''} onChange={(e) => setChair({ role: e.target.value })} placeholder={t('content_board_role_ph')} style={{ marginBottom: 8 }} />
+        <input value={data.chair?.name || ''} onChange={(e) => setChair({ name: e.target.value })} placeholder={t('content_name_ph')} />
+        <div style={{ marginTop: 8 }}><PhotoField value={data.chair?.photo || ''} onChange={(id) => setChair({ photo: id })} /></div>
+      </div>
+
+      <div className="card-legend" style={{ marginTop: 8 }}>{t('content_board_directors')}</div>
+      <div className="grid2">
+        {(data.directors || []).map((d, i) => (
+          <div className="field" key={i} style={{ border: '1px solid var(--line)', borderRadius: 10, padding: 12 }}>
+            <input value={d.role || ''} onChange={(e) => setDir(i, { role: e.target.value })} placeholder={t('content_board_role_ph')} style={{ marginBottom: 8 }} />
+            <input value={d.name || ''} onChange={(e) => setDir(i, { name: e.target.value })} placeholder={t('content_name_ph')} />
+            <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <PhotoField value={d.photo || ''} onChange={(id) => setDir(i, { photo: id })} />
+              <button className="btn btn-ghost" style={{ padding: '6px 12px', color: 'var(--danger)' }} onClick={() => removeDir(i)}>{t('content_board_remove')}</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="btn-row" style={{ marginTop: 12 }}>
+        <button className="btn btn-ghost" onClick={addDir}>{t('content_board_add')}</button>
       </div>
       <SaveBar msg={msg} busy={busy} onSave={() => save(data)} />
     </div>

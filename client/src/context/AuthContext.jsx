@@ -64,6 +64,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  // Idle timeout: log the user out and show the "signed out for inactivity"
+  // message on the login screen. Kept separate from logout() so the reason is set.
+  const endSessionIdle = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    setSessionEndedReason('idle');
+  }, []);
+
   const register = useCallback(async (form) => {
     // Registration no longer logs the member in — they must verify their email
     // first. Return the server's response so the page can show the next step.
@@ -87,7 +95,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, login, complete2fa, logout, register, refresh,
+      user, loading, login, complete2fa, logout, register, refresh, endSessionIdle,
       sessionEndedReason, clearSessionEnded: () => setSessionEndedReason(null),
     }}>
       {children}
