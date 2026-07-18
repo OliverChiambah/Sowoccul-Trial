@@ -121,6 +121,7 @@ export default function Security({ forced = false }) {
         ) : setup ? (
           <>
             <p style={{ fontSize: 14 }}>{t('twofa_step1')}</p>
+            <p className="muted" style={{ fontSize: 13, background: 'var(--surface-2, #f6f6f6)', borderRadius: 8, padding: '8px 10px', lineHeight: 1.5 }}>{t('twofa_fresh_scan_note')}</p>
             <ol style={{ fontSize: 14, lineHeight: 1.7, paddingLeft: 20 }}>
               <li>{t('twofa_step_app')}</li>
               <li>{t('twofa_step_enter')}</li>

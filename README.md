@@ -232,7 +232,7 @@ integrity appropriate here.
 - Member login → dashboard with account balances, a loan-balance tile, and a
   full downloadable bank statement (PDF).
 - **Branches:** at registration a member picks the branch closest to them
-  (Bamenda, Limbe, Douala, Bafoussam, Ebolowa, Yaoundé — HQ Limbe). Members are
+  (Bamenda, Limbe, Douala, Bafoussam, Garoua, Yaoundé — HQ Limbe). Members are
   grouped by branch in the staff console, which can filter by branch and
   reassign a member to another branch.
 - **Registration ("Become a member"):** full bilingual form (individual /

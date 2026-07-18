@@ -12,6 +12,8 @@ import Landing from './pages/Landing.jsx';
 // This keeps the initial bundle small, so the public site loads fast and the
 // heavier logged-in pages don't slow down a first-time visitor.
 const Team = lazy(() => import('./pages/Team.jsx'));
+const Board = lazy(() => import('./pages/Board.jsx'));
+const Partners = lazy(() => import('./pages/Partners.jsx'));
 const BranchPage = lazy(() => import('./pages/BranchPage.jsx'));
 const Careers = lazy(() => import('./pages/Careers.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -28,6 +30,8 @@ const AdminLoans = lazy(() => import('./pages/AdminLoans.jsx'));
 const AdminMembers = lazy(() => import('./pages/AdminMembers.jsx'));
 const AdminContent = lazy(() => import('./pages/AdminContent.jsx'));
 const AdminStaff = lazy(() => import('./pages/AdminStaff.jsx'));
+const LoginHelp = lazy(() => import('./pages/LoginHelp.jsx'));
+const AdminApplications = lazy(() => import('./pages/AdminApplications.jsx'));
 const AuditLog = lazy(() => import('./pages/AuditLog.jsx'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword.jsx'));
 const LegalPage = lazy(() => import('./pages/LegalPage.jsx'));
@@ -103,6 +107,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
             <Route path="/team" element={<Team />} />
+            <Route path="/board" element={<Board />} />
+            <Route path="/partners" element={<Partners />} />
             <Route path="/branch/:idOrName" element={<BranchPage />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/privacy" element={<LegalPage section="privacy" />} />
@@ -126,10 +132,12 @@ export default function App() {
               <Route path="/admin/corrections" element={<RequireOperational><AdminCorrections /></RequireOperational>} />
               <Route path="/admin/content" element={<RequireAdmin><AdminContent /></RequireAdmin>} />
               <Route path="/admin/staff" element={<RequireAdmin><AdminStaff /></RequireAdmin>} />
-              <Route path="/admin/settings" element={<RequireAdmin><AdminSettings /></RequireAdmin>} />
+              <Route path="/admin/login-help" element={<RequireAdmin><LoginHelp /></RequireAdmin>} />
+              <Route path="/admin/settings" element={<RequireManagerOrAdmin><AdminSettings /></RequireManagerOrAdmin>} />
               <Route path="/directory" element={<RequireStaff><Directory /></RequireStaff>} />
               <Route path="/admin/approvals" element={<RequireOperational><Approvals /></RequireOperational>} />
               <Route path="/admin/audit" element={<RequireManagerOrAdmin><AuditLog /></RequireManagerOrAdmin>} />
+              <Route path="/admin/applications" element={<RequireManagerOrAdmin><AdminApplications /></RequireManagerOrAdmin>} />
               <Route path="/account/password" element={<ChangePassword />} />
               <Route path="/account/security" element={<Security />} />
             </Route>

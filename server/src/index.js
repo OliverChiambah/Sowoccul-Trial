@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { initSchema } from './db/index.js';
+import { reconcileContentOnce } from './lib/content.js';
 import { ensureChart, backfillOpeningBalances } from './lib/ledger.js';
 import { drainOutbox } from './lib/notify.js';
 import { emailProviderName } from './lib/mailer.js';
@@ -52,6 +53,11 @@ async function start() {
   try {
     await initSchema();
     await ensureChart();   // seed the ledger's base chart of accounts (idempotent)
+    // One-time: push the real Board of Directors and Board President into any
+    // database that was saved before those details were supplied. Runs once,
+    // then never touches the content again (see reconcileContentOnce).
+    const rc = await reconcileContentOnce();
+    if (rc.ran) logger.info('content.reconciled', { sections: ['board', 'team'] });
     // Bring the ledger in sync with any pre-existing balances (idempotent; only
     // acts on accounts that have no ledger history yet).
     const bf = await backfillOpeningBalances();

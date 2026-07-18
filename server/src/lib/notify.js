@@ -166,6 +166,66 @@ Sign in to the approvals queue to review it.
 
 — SONEL Workers Credit Union (SOWOCCUL)`,
   },
+
+  member_admitted: (lang, d) => lang === 'fr' ? {
+    subject: `SOWOCCUL : votre compte a été créé — bienvenue !`,
+    body:
+`Bonjour ${d.name},
+
+Félicitations ! Votre compte a été créé et validé par ${d.branch ? `l'agence de ${d.branch}` : 'votre agence'}.
+
+Pour vous connecter :
+• Identifiant : votre adresse e-mail (${d.email})
+• Mot de passe : celui que vous avez choisi lors de votre inscription
+
+Connectez-vous ici : ${d.loginUrl}
+${d.note ? `\nMessage de votre agence : ${d.note}\n` : ''}
+Bienvenue à SONEL Workers Credit Union.
+
+— SONEL Workers Credit Union (SOWOCCUL)`,
+  } : {
+    subject: `SOWOCCUL: your account has been created — welcome!`,
+    body:
+`Hello ${d.name},
+
+Congratulations! Your account has been created and approved by ${d.branch ? `the ${d.branch} branch` : 'your branch'}.
+
+To sign in:
+• Username: your email address (${d.email})
+• Password: the one you chose when you registered
+
+Sign in here: ${d.loginUrl}
+${d.note ? `\nMessage from your branch: ${d.note}\n` : ''}
+Welcome to SONEL Workers Credit Union.
+
+— SONEL Workers Credit Union (SOWOCCUL)`,
+  },
+
+  member_more_info: (lang, d) => lang === 'fr' ? {
+    subject: `SOWOCCUL : informations complémentaires nécessaires pour votre inscription`,
+    body:
+`Bonjour ${d.name},
+
+Merci pour votre demande d'adhésion. Avant de valider votre compte, ${d.branch ? `l'agence de ${d.branch}` : 'votre agence'} a besoin de précisions :
+
+${d.message}
+
+Veuillez répondre à cet e-mail ou passer en agence avec les éléments demandés. Votre demande reste en attente jusque-là.
+
+— SONEL Workers Credit Union (SOWOCCUL)`,
+  } : {
+    subject: `SOWOCCUL: more information needed for your registration`,
+    body:
+`Hello ${d.name},
+
+Thank you for your membership application. Before we can approve your account, ${d.branch ? `the ${d.branch} branch` : 'your branch'} needs some more details:
+
+${d.message}
+
+Please reply to this email or visit the branch with the requested items. Your application stays pending until then.
+
+— SONEL Workers Credit Union (SOWOCCUL)`,
+  },
 };
 
 // ---- Enqueue ---------------------------------------------------------------
@@ -251,4 +311,6 @@ export const notify = {
   security: (userId, data) => enqueueEmail({ userId, event: 'security', data, important: true }),
   approvalNeeded: (userId, data) => enqueueEmail({ userId, event: 'approval_needed', data }),
   verifyEmail: (userId, data) => enqueueEmail({ userId, event: 'verify_email', data, important: true }),
+  memberAdmitted: (userId, data) => enqueueEmail({ userId, event: 'member_admitted', data, important: true }),
+  memberMoreInfo: (userId, data) => enqueueEmail({ userId, event: 'member_more_info', data, important: true }),
 };

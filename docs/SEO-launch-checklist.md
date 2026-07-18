@@ -53,7 +53,7 @@ puts you in Google Maps and the local "pack" of results.
       **Sonel Workers Credit Union (SOWOCCUL)**.
 - [ ] Category: **Credit union** (add "Financial institution" as a secondary category).
 - [ ] Add your **Limbe head office** address, phone, hours, and website (sowoccul.cm).
-- [ ] Add each of the other branches (Douala, Bamenda, Yaoundé, Bafoussam, Ebolowa) as
+- [ ] Add each of the other branches (Douala, Bamenda, Yaoundé, Bafoussam, Garoua) as
       their own locations if they have their own address and phone.
 - [ ] Verify the profile (Google mails a postcard with a code, or offers phone/video).
 - [ ] Add real photos: the branch fronts, the logo, the team. Profiles with photos rank

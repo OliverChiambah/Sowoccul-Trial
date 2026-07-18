@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db/index.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, blockPendingMember } from '../middleware/auth.js';
 import { issueStatement } from '../lib/statements.js';
 import { ah } from '../lib/async-handler.js';
 import { validateBody, v } from '../lib/validate.js';
@@ -80,7 +80,7 @@ accountsRouter.get('/:id/transactions', ah(async (req, res) => {
  * Body: { from_account_id, to_account_id, amount, description }
  * Real, atomic double-entry: debit one, credit the other, in a transaction.
  */
-accountsRouter.post('/transfer', validateBody({
+accountsRouter.post('/transfer', blockPendingMember, validateBody({
   from_account_id: v.int().min(1),
   to_account_id: v.int().min(1),
   amount: v.int().min(1),
