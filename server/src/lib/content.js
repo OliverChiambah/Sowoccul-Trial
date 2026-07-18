@@ -138,7 +138,11 @@ export const DEFAULT_CONTENT = {
     cta_secondary: 'Member login',
   },
   team: {
+<<<<<<< HEAD
     president: { name: 'Chia Kingsley', role: 'President, Board of Directors', photo: '/board/chia-kingsley.jpg' },
+=======
+    president: { name: '', role: 'President, Board of Directors', photo: '' },
+>>>>>>> 93a0bbf9a9e29e262487a214d019adaf26a5814b
     gm: { name: 'Kemonde David', role: 'General Manager', phone: '677 65 22 18', email: 'd.kemonde@gmail.com', photo: '/team/david-kemonde.jpg' },
     // Ranked directly below the GM: the Assistant General Manager, who also
     // manages the Yaoundé branch. Shown on his own row above the rest.
@@ -160,12 +164,23 @@ export const DEFAULT_CONTENT = {
   // are admin-editable and served from the API, exactly like the team section.
   // The chair sits at the top; the other directors follow in a grid.
   board: {
+<<<<<<< HEAD
     chair: { name: 'Chia Kingsley', role: 'President & Chairman, Board of Directors', photo: '/board/chia-kingsley.jpg' },
     directors: [
       { name: 'Sam Akwo', role: 'Board Secretary', photo: '/board/sam-akwo.jpg' },
       { name: 'Angwe Caro', role: 'Board Member', photo: '/board/angwe-caro.jpg' },
       { name: 'Penn Tengem', role: 'Board Member', photo: '/board/penn-tengem.jpg' },
       { name: 'Liengu Racheal', role: 'Board Member', photo: '/board/liengu-racheal.jpg' },
+=======
+    chair: { name: '', role: 'Chairperson, Board of Directors', photo: '' },
+    directors: [
+      { name: '', role: 'Vice-Chairperson', photo: '' },
+      { name: '', role: 'Secretary', photo: '' },
+      { name: '', role: 'Treasurer', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+      { name: '', role: 'Director', photo: '' },
+>>>>>>> 93a0bbf9a9e29e262487a214d019adaf26a5814b
     ],
   },
   // Partners, regulators and affiliations, grouped as in the cooperative's own
